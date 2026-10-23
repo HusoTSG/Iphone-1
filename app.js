@@ -72,7 +72,7 @@ let S = defaultState();
 const ui = { tab: 'train', liveOpen: true, chart: 'kg' };
 
 let saveTimer = null;
-function save(now = false) { clearTimeout(saveTimer); if (now) return Store.set('state', S); saveTimer = setTimeout(() => Store.set('state', S), 250); return Promise.resolve(); }
+function save(now = false) { pushSync(); clearTimeout(saveTimer); if (now) return Store.set('state', S); saveTimer = setTimeout(() => Store.set('state', S), 250); return Promise.resolve(); }
 
 // Passage de l'ancienne version (nutrition, habitudes…) à la version simplifiée
 function migrate(old) {
@@ -736,6 +736,10 @@ function settingsSheet() {
       <div class="section"><div class="section-h">Séance</div><div class="form-group">
         <div class="fr"><label for="s-rest">Repos par défaut</label><select id="s-rest" data-change="setting" data-k="rest" style="width:auto;background:transparent">${[45, 60, 90, 120, 150, 180, 240].map((v) => `<option value="${v}" ${S.settings.rest === v ? 'selected' : ''}>${fmtRest(v)}</option>`).join('')}</select></div>
         <div class="fr"><label for="s-bar">Barre</label><select id="s-bar" data-change="setting" data-k="bar" style="width:auto;background:transparent">${[20, 15, 10].map((v) => `<option value="${v}" ${S.settings.bar === v ? 'selected' : ''}>${v} kg</option>`).join('')}</select></div></div></div>
+      <div class="section"><div class="section-h">Notifications</div><div class="form-group">
+        <div class="fr"><label for="s-push">Notifier la fin du repos</label><input type="checkbox" class="switch" id="s-push" data-change="pushToggle" ${pushOn() ? 'checked' : ''}></div></div>
+        ${pushOn() ? `<div class="group" style="margin-top:8px">${cell({ a: 'pushTest', t: '<span style="color:var(--blue)">Tester (notif dans 5 s)</span>', chev: false })}</div>` : ''}
+        <div class="section-f">Une notification HusoFit arrive à la fin de chaque repos, même téléphone verrouillé.</div></div>
       <div class="section"><div class="section-h">Minuteur iPhone</div><div class="form-group">
         <div class="fr"><label for="s-ios">Utiliser le minuteur de l’iPhone</label><input type="checkbox" class="switch" id="s-ios" data-change="iosTimer" ${S.settings.iosTimer ? 'checked' : ''}></div></div>
         <div class="group" style="margin-top:8px">${cell({ a: 'timerGuide', t: 'Créer le raccourci (une seule fois)' })}</div>
@@ -745,6 +749,57 @@ function settingsSheet() {
         <div class="section-f">Tes données restent sur cet iPhone. Exporte-les de temps en temps vers Fichiers ou iCloud Drive.</div></div>
       <div class="group"><button class="cell danger" data-a="wipe">Effacer toutes les données</button></div>`,
   });
+}
+
+// ---------- Notifications HusoFit (fin du repos) ----------
+// Un petit serveur (dossier push/) envoie la notif au bon moment, même appli fermée.
+const PUSH_URL = '';
+let pushAt = null;
+const pushOn = () => !!(PUSH_URL && S.settings.push && S.pushSub);
+function pushPost(path, body) {
+  return fetch(PUSH_URL + path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), keepalive: true });
+}
+// Appelée à chaque sauvegarde : (re)programme ou annule la notif si l'heure de fin du repos a changé.
+function pushSync() {
+  if (!pushOn()) return;
+  const at = S.live && S.live.restEnd ? S.live.restEnd : null;
+  if (at === pushAt) return;
+  pushAt = at;
+  if (!at) { pushPost('/cancel', { endpoint: S.pushSub.endpoint }).catch(() => {}); return; }
+  let body = 'C’est reparti !';
+  for (const e of S.live.exercises) {
+    const k = e.sets.findIndex((s) => !s.done);
+    if (k >= 0) { body = `${exById(e.exId).name} · série ${k + 1}`; break; }
+  }
+  pushPost('/schedule', { sub: S.pushSub, at, title: 'Repos terminé', body }).catch(() => {});
+}
+const keyBytes = (str) => Uint8Array.from(atob(str.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - (str.length % 4)) % 4)), (c) => c.charCodeAt(0));
+async function pushEnable() {
+  if (!PUSH_URL) { toast('Le serveur de notifications n’est pas encore installé'); return false; }
+  if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) { toast('Ouvre HusoFit depuis l’écran d’accueil pour activer les notifications'); return false; }
+  // iOS veut la demande d'autorisation tout de suite après le toucher
+  const perm = await Notification.requestPermission();
+  if (perm !== 'granted') { toast('Notifications refusées : autorise-les dans Réglages › Notifications › HusoFit'); return false; }
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) {
+      const { key } = await (await fetch(PUSH_URL + '/key')).json();
+      sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyBytes(key) });
+    }
+    S.pushSub = sub.toJSON(); S.settings.push = true; pushAt = null; save();
+    return true;
+  } catch (e) { toast('Impossible d’activer les notifications, réessaie avec du réseau'); return false; }
+}
+// Au lancement : garde l'abonnement à jour (iOS peut le renouveler)
+async function pushRefresh() {
+  if (!PUSH_URL || !S.settings.push || !('serviceWorker' in navigator)) return;
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+    if (!sub) { S.settings.push = false; S.pushSub = null; save(); return; }
+    if (!S.pushSub || S.pushSub.endpoint !== sub.endpoint) { S.pushSub = sub.toJSON(); pushAt = null; save(); }
+  } catch (e) { /* rien */ }
 }
 
 // Lance le raccourci « HusoFit Repos » qui démarre le minuteur de l'iPhone (Dynamic Island + sonnerie)
@@ -797,6 +852,12 @@ const A = {
   menuDayAdd() { closeSheet(); A.dayAdd(); },
   swipeDel(el) { swipeDelete(el.closest('.swipe')); },
   timerGuide() { timerGuideSheet(); },
+  pushTest() {
+    if (!pushOn()) return;
+    pushPost('/schedule', { sub: S.pushSub, at: Date.now() + 5000, title: 'Repos terminé', body: 'Test réussi, c’est reparti !' })
+      .then((r) => toast(r.ok ? 'Verrouille ton iPhone, la notif arrive dans 5 s' : 'Le serveur a refusé, réessaie'))
+      .catch(() => toast('Pas de réseau'));
+  },
   timerTest() { if (!S.settings.iosTimer) { S.settings.iosTimer = true; save(); } runIosTimer(10); },
 
   startWorkout(el) { unlockAudio(); startWorkout(el.dataset.p, el.dataset.d); },
@@ -893,6 +954,11 @@ const IN = {
 };
 const CH = {
   setting(el) { S.settings[el.dataset.k] = Number(el.value); save(); },
+  async pushToggle(el) {
+    if (el.checked) { const ok = await pushEnable(); el.checked = ok; if (ok) toast('Notifications activées'); }
+    else { if (S.pushSub) pushPost('/cancel', { endpoint: S.pushSub.endpoint }).catch(() => {}); S.settings.push = false; save(); }
+    if (sheets.length) paintSheet();
+  },
   iosTimer(el) { S.settings.iosTimer = el.checked; save(); if (el.checked) toast('Pense à créer le raccourci « HusoFit Repos »'); },
   plateBar(el) { const c = topSheet(); c.bar = Number(el.value); $('#plRes', c.el).innerHTML = c.result(); },
   dayWd(el) { const c = topSheet(); const v = Number(el.value); c.dy.weekday = v || undefined; save(); },
@@ -975,5 +1041,6 @@ async function boot() {
   if (msg && saved) toast(msg);
   try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) { /* rien */ }
   try { if ('serviceWorker' in navigator && location.protocol === 'https:' && document.documentElement.classList.contains('pwa')) navigator.serviceWorker.register('sw.js'); } catch (e) { /* rien */ }
+  pushRefresh();
 }
 boot();

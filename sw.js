@@ -1,5 +1,5 @@
 // Mode hors ligne : garde l'appli en cache. Change VERSION à chaque mise à jour.
-const VERSION = 'husofit-v45';
+const VERSION = 'husofit-v46';
 const SHELL = ['./', 'index.html', 'styles.css', 'data.js', 'app.js', 'manifest.webmanifest', 'icons/apple-touch-icon.png', 'icons/icon-192.png', 'icons/icon-512.png'];
 
 self.addEventListener('install', (e) => {
@@ -26,4 +26,25 @@ self.addEventListener('fetch', (e) => {
       })
       .catch(() => caches.match(e.request, { ignoreSearch: true }).then((r) => r || caches.match('index.html')))
   );
+});
+
+// Notification « Repos terminé » envoyée par le serveur HusoFit
+self.addEventListener('push', (e) => {
+  let d = {};
+  try { d = e.data ? e.data.json() : {}; } catch (x) { d = {}; }
+  e.waitUntil(self.registration.showNotification(d.title || 'Repos terminé', {
+    body: d.body || 'C’est reparti !',
+    icon: 'icons/icon-192.png',
+    tag: 'rest',
+    renotify: true,
+  }));
+});
+
+// Toucher la notif rouvre HusoFit
+self.addEventListener('notificationclick', (e) => {
+  e.notification.close();
+  e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
+    for (const c of list) if ('focus' in c) return c.focus();
+    return self.clients.openWindow('./');
+  }));
 });
