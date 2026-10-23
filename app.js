@@ -739,7 +739,7 @@ const A = {
   settings() { settingsSheet(); },
   swipeDel(el) { swipeDelete(el.closest('.swipe')); },
   timerGuide() { timerGuideSheet(); },
-  timerTest() { runIosTimer(10); },
+  timerTest() { if (!S.settings.iosTimer) { S.settings.iosTimer = true; save(); } runIosTimer(10); },
 
   startWorkout(el) { unlockAudio(); startWorkout(el.dataset.p, el.dataset.d); },
   startFree() { unlockAudio(); startWorkout(null, null); },
