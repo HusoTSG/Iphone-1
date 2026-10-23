@@ -296,7 +296,14 @@ function dayKind(name) {
   return 'other';
 }
 const DAY_LETTER = ['', 'L', 'M', 'M', 'J', 'V', 'S', 'D'];
-const dayIcon = (d) => { const k = DAY_ICONS[dayKind(d.name)]; const l = d.weekday ? DAY_LETTER[d.weekday] : esc(d.name.trim().charAt(0).toUpperCase()); return `<span class="day-ic letter" style="background:var(--day-${d.weekday || 7})">${l}</span>`; };
+const DAY_SHORT = ['', 'LUN', 'MAR', 'MER', 'JEU', 'VEN', 'SAM', 'DIM'];
+// Mini calendrier façon iPhone : jour en petit, date de cette semaine en gros
+const dayIcon = (d) => {
+  if (!d.weekday) return `<span class="day-cal"><span class="wd">JOUR</span><span class="dn">•</span></span>`;
+  const date = parseKey(addDays(dkey(), d.weekday - todayWd())).getDate();
+  const isToday = d.weekday === todayWd();
+  return `<span class="day-cal${isToday ? ' today' : ''}"><span class="wd">${DAY_SHORT[d.weekday]}</span><span class="dn">${date}</span></span>`;
+};
 const dayLabel = (d) => esc(d.name.replace(/\s·\s/, ' - '));
 
 const views = {};

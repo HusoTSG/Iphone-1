@@ -635,3 +635,17 @@ h2 { font-family: var(--font-display); font-weight: 700; letter-spacing: 0.2px; 
 .day-pill .t b { font-family: var(--font); font-weight: 600 !important; font-size: 17px; }
 .metric .v { font-family: var(--font-round); font-weight: 700; }
 .day-ic.letter { font-family: var(--font-round); font-weight: 700; font-size: 21px; }
+
+/* Mini calendrier (façon icône Calendrier d'iPhone) */
+.day-cal {
+  width: 50px; height: 50px; border-radius: 13px; flex: none;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0;
+  background: var(--glass-bg); border: 1px solid var(--glass-edge);
+  -webkit-backdrop-filter: blur(20px) saturate(180%); backdrop-filter: blur(20px) saturate(180%);
+  box-shadow: inset 0 1px 0 var(--glass-hi);
+}
+.day-cal .wd { font-size: 10px; font-weight: 700; letter-spacing: 0.4px; color: var(--red); line-height: 1.1; }
+.day-cal .dn { font-size: 23px; font-weight: 500; line-height: 1.05; color: var(--label); font-variant-numeric: tabular-nums; letter-spacing: -0.5px; }
+.day-cal.today { background: var(--red); border-color: transparent; }
+.day-cal.today .wd, .day-cal.today .dn { color: #fff; }
+.day-pill { padding-left: 10px; }
