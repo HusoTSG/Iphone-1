@@ -59,6 +59,8 @@ const EXERCISES = [
   { id: 'bulgarian', name: 'Fentes bulgares', muscle: 'Quadriceps', equip: 'Haltères' },
   { id: 'lunge', name: 'Fentes marchées', muscle: 'Quadriceps', equip: 'Haltères' },
   { id: 'rdl', name: 'Soulevé de terre roumain', muscle: 'Ischios', equip: 'Barre' },
+  { id: 'db-rdl', name: 'Soulevé de terre roumain haltères', muscle: 'Ischios', equip: 'Haltères' },
+  { id: 'back-ext-rounded', name: 'Extension lombaire dos rond', muscle: 'Fessiers', equip: 'Poids du corps' },
   { id: 'leg-curl', name: 'Leg curl', muscle: 'Ischios', equip: 'Machine' },
   { id: 'seated-leg-curl', name: 'Leg curl assis', muscle: 'Ischios', equip: 'Machine' },
   { id: 'hip-thrust', name: 'Hip thrust', muscle: 'Fessiers', equip: 'Barre' },
@@ -201,7 +203,7 @@ const SEED_HABITS = [
 const COACH_PROGRAM = {
   id: 'coach',
   name: 'Programme coach',
-  version: 2,
+  version: 3,
   days: [
     { id: 'mon-upper', name: 'Lundi · Upper', weekday: 1, exercises: [
       { exId: 'lat-pulldown', sets: 3, reps: '8-12', kg: 36.5, rest: 120, note: '1-2 RIR' },
@@ -233,6 +235,14 @@ const COACH_PROGRAM = {
       { exId: 'seated-row', sets: 3, reps: '8-12', kg: 57, rest: 120, note: '1-2 RIR' },
       { exId: 'reverse-fly-machine', sets: 3, reps: '10-15', kg: 35.2, rest: 90, note: '' },
       { exId: 'cable-curl', sets: 3, reps: '10-15', kg: 28.5, rest: 90, note: '' },
+    ] },
+    { id: 'sat-leg', name: 'Samedi · Leg', weekday: 6, exercises: [
+      { exId: 'seated-leg-curl', sets: 3, reps: '8-12', kg: 57, rest: 90, note: '1-2 RIR' },
+      { exId: 'db-rdl', sets: 3, reps: '8-12', kg: 24, rest: 120, note: '1-2 RIR · charge modérée, attention au dos' },
+      { exId: 'back-ext-rounded', sets: 3, reps: '8-12', kg: 12.5, rest: 90, note: '1-2 RIR · arrondir le dos au maximum' },
+      { exId: 'leg-ext', sets: 3, reps: '15-20', kg: 49.5, rest: 90, note: '1-2 RIR' },
+      { exId: 'lunge', sets: 3, reps: '6-10', kg: 20, rest: 120, note: '1-2 RIR · reps par jambe' },
+      { exId: 'calf-seated', sets: 3, reps: '10-15', kg: 30, rest: 60, note: '1-2 RIR' },
     ] },
   ],
   // Séances déjà faites, pour que la colonne « Préc. » et les courbes partent de là.
@@ -267,6 +277,14 @@ const COACH_PROGRAM = {
       { exId: 'seated-row', sets: [[57, 8], [57, 8], [57, 8]] },
       { exId: 'reverse-fly-machine', sets: [[35.2, 13], [35.2, 14], [35.2, 14]] },
       { exId: 'cable-curl', sets: [[28.5, 14], [28.5, 15], [28.5, 15]] },
+    ] },
+    { date: '2026-10-17', dayId: 'sat-leg', name: 'Samedi · Leg', exercises: [
+      { exId: 'seated-leg-curl', sets: [[57, 9], [57, 9], [57, 10]] },
+      { exId: 'db-rdl', sets: [[24, 8], [24, 8], [24, 9]] },
+      { exId: 'back-ext-rounded', sets: [[12.5, 8], [12.5, 9], [12.5, 9]] },
+      { exId: 'leg-ext', sets: [[49.5, 17], [49.5, 18], [49.5, 18]] },
+      { exId: 'lunge', sets: [[20, 6], [20, 6], [20, 7]] },
+      { exId: 'calf-seated', sets: [[30, 13], [30, 13], [30, 14]] },
     ] },
   ],
 };
