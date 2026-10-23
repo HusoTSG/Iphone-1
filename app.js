@@ -335,9 +335,9 @@ views.train = () => {
     const v = isNext ? `<span class="next-pill">PROCHAIN</span>` : isDone ? `<span class="done-dot" aria-label="Fait"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>` : '';
     return cell({ a: 'dayOpen', cls: `day-row${isNext ? ' next' : isDone ? ' done' : ''}`, data: `data-d="${d.id}"`, badge: dayIcon(d), t: dayLabel(d), v });
   }).join('') : '';
-  return `<header class="large"><div><h1>Entraînement</h1><div class="sub">${cap(fmtDay(k))}</div></div><div class="row" style="gap:10px"><button class="icon-btn" data-a="moreMenu" aria-label="Plus d’options">${ICON.more}</button><button class="icon-btn" data-a="settings" aria-label="Réglages">${ICON.gear}</button></div></header>
+  return `<header class="large train-h"><h1>Entraînement</h1><div class="row" style="gap:10px"><button class="icon-btn" data-a="moreMenu" aria-label="Plus d’options">${ICON.more}</button><button class="icon-btn" data-a="settings" aria-label="Réglages">${ICON.gear}</button></div></header>
     ${live}
-    ${prog ? `<div class="section prog-sec"><div class="section-h">${esc(prog.name)} · ${doneSet.size}/${prog.days.length} cette semaine</div><div class="day-pills fill">${days}</div></div>` : '<div class="card"><h2>Aucun programme</h2><p class="muted small" style="margin:0">Touche ••• en haut pour créer un programme ou lancer une séance libre.</p></div>'}`;
+    ${prog ? `<div class="section prog-sec"><div class="section-h week-count">${doneSet.size}/${prog.days.length}</div><div class="day-pills fill">${days}</div></div>` : '<div class="card"><h2>Aucun programme</h2><p class="muted small" style="margin:0">Touche ••• en haut pour créer un programme ou lancer une séance libre.</p></div>'}`;
 };
 
 // ---------- Vue Historique ----------

@@ -71,6 +71,7 @@ const EXERCISES = [
   { id: 'crunch', name: 'Crunch', muscle: 'Abdos', equip: 'Poids du corps' },
   { id: 'side-plank', name: 'Planche latérale', muscle: 'Abdos', equip: 'Poids du corps' },
   { id: 'plank-leg-open', name: 'Gainage ouverture de jambe alternée', muscle: 'Abdos', equip: 'Poids du corps' },
+  { id: 'crunch-db', name: 'Crunch haltère', muscle: 'Abdos', equip: 'Haltères' },
   { id: 'crunch-cable', name: 'Crunch poulie', muscle: 'Abdos', equip: 'Poulie' },
   { id: 'leg-raise', name: 'Relevés de jambes suspendu', muscle: 'Abdos', equip: 'Poids du corps' },
   { id: 'ab-wheel', name: 'Roue abdominale', muscle: 'Abdos', equip: 'Accessoire' },
@@ -87,7 +88,7 @@ const EXERCISES = [
 const COACH_PROGRAM = {
   id: 'coach',
   name: 'Programme coach',
-  version: 7,
+  version: 8,
   days: [
     { id: 'mon-upper', name: 'Lundi · Upper', weekday: 1, exercises: [
       { exId: 'lat-pulldown', sets: 3, reps: '8-12', kg: 36.5, rest: 120, note: '1-2 RIR' },
@@ -122,6 +123,9 @@ const COACH_PROGRAM = {
       { exId: 'seated-row', sets: 3, reps: '8-12', kg: 57, rest: 120, note: '1-2 RIR' },
       { exId: 'reverse-fly-machine', sets: 3, reps: '10-15', kg: 35.2, rest: 90, note: '' },
       { exId: 'cable-curl', sets: 3, reps: '10-15', kg: 28.5, rest: 90, note: '' },
+      { exId: 'crunch-db', sets: 3, reps: '12', kg: 12, rest: 60, note: 'Abdos' },
+      { exId: 'side-plank', sets: 3, reps: '30', kg: 0, rest: 60, note: 'Abdos · 30 s de chaque côté' },
+      { exId: 'back-ext-rounded', sets: 3, reps: '8-12', kg: 20, rest: 60, note: 'Abdos' },
     ] },
     { id: 'sat-leg', name: 'Samedi · Leg', weekday: 6, exercises: [
       { exId: 'seated-leg-curl', sets: 3, reps: '10-15', kg: 57, rest: 90, note: '1-2 RIR' },

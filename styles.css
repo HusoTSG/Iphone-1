@@ -725,3 +725,8 @@ body::before {
 /* Séance faite : coche blanche dans un rond vert */
 .done-dot { width: 28px; height: 28px; border-radius: 50%; background: var(--green); color: #fff; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: inset 0 1px 0 rgba(255,255,255,0.25); }
 .day-row.done { border: 1.5px solid var(--green); }
+
+/* En-tête Entraînement : titre aligné avec les boutons, icônes blanches */
+header.large.train-h { align-items: center; }
+header.large.train-h .icon-btn { color: var(--label); }
+.section-h.week-count { font-variant-numeric: tabular-nums; }
