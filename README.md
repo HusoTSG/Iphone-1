@@ -1,13 +1,13 @@
 # HusoFit
 
-Mon appli perso de coaching sportif pour iPhone (web app installable) :
+Mon appli perso pour iPhone (web app installable, style iOS) :
 
-- **Entraînement** : programmes (Push Pull Legs, Full body, ou les tiens), séance guidée avec chrono de repos, charges de la dernière fois, calculateur de disques, records (1RM estimé), historique.
-- **Nutrition** : journal par repas, base d'aliments courants, ajout rapide, aliments perso, calories et macros, eau.
-- **Progrès** : poids avec moyenne sur 7 jours, mensurations, photos avant/après, bilan hebdomadaire.
-- **Habitudes** et pas quotidiens.
+- **Entraînement** : le programme envoyé par mon coach (un jour par jour de la semaine), séance guidée avec poids cible, charges de la dernière fois, chrono de repos et calculateur de disques. Records et historique.
+- **Suivi** : poids et tour de taille chaque semaine, avec la courbe et l'écart d'une semaine à l'autre.
 
-Toutes les données restent sur le téléphone (export/import de sauvegarde dans l'onglet Plus).
+Le programme du coach est dans `data.js` (`COACH_PROGRAM`). Changer les cibles et augmenter `version` met l'appli à jour toute seule.
+
+Toutes les données restent sur le téléphone (export/import dans Réglages).
 
 ## Installer sur l'iPhone
 1. Héberger ces fichiers en HTTPS (par ex. GitHub Pages).

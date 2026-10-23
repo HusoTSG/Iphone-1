@@ -5,8 +5,8 @@
 <title>HusoFit</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="claude:viewport-fit-sides" content="cover">
-<meta name="description" content="Mon coach perso : entraînement, nutrition et suivi des progrès.">
-<meta name="theme-color" content="#eef1f4">
+<meta name="description" content="Mes séances et mon suivi de poids et tour de taille.">
+<meta name="theme-color" content="#f2f2f7">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -14,19 +14,14 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="icons/icon-192.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 <main id="main" aria-live="polite"></main>
 <div class="tabbar"><nav aria-label="Navigation principale">
-  <button data-a="tab" data-t="home" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3.5 10.5 12 3.5l8.5 7V20a1 1 0 0 1-1 1H15v-6H9v6H4.5a1 1 0 0 1-1-1z"/></svg>Accueil</button>
-  <button data-a="tab" data-t="train"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6.5 6.5v11M3.5 9v6M17.5 6.5v11M20.5 9v6M6.5 12h11"/></svg>Entraînement</button>
-  <button data-a="tab" data-t="food"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7.5c-1.6-1.3-5.2-1.6-6.6 1-1.5 2.7-.6 7 1.1 9.8 1.6 2.6 3.4 2.9 5.5 1.9 2.1 1 3.9.7 5.5-1.9 1.7-2.8 2.6-7.1 1.1-9.8-1.4-2.6-5-2.3-6.6-1z"/><path d="M12 7.5c0-2 1-3.5 3-4.5"/></svg>Nutrition</button>
-  <button data-a="tab" data-t="progress"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16"/><path d="M5 15.5l4.5-4.5 3.5 3 6-7"/></svg>Progrès</button>
-  <button data-a="tab" data-t="more"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>Plus</button>
+  <button data-a="tab" data-t="train" class="on"><svg viewBox="0 0 28 28" fill="currentColor"><rect x="2" y="10" width="3" height="8" rx="1.2"/><rect x="5.5" y="6.5" width="4" height="15" rx="1.6"/><rect x="9.5" y="12.6" width="9" height="2.8" rx="1"/><rect x="18.5" y="6.5" width="4" height="15" rx="1.6"/><rect x="23" y="10" width="3" height="8" rx="1.2"/></svg>Entraînement</button>
+  <button data-a="tab" data-t="history"><svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="14" cy="14" r="10.5"/><path d="M14 8v6.5l4 2.5"/></svg>Historique</button>
+  <button data-a="tab" data-t="track"><svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 20l6.5-6.5 4.5 4 10-10"/><path d="M18.5 7.5h6v6"/></svg>Suivi</button>
 </nav></div>
 <div id="live" hidden></div>
 <div id="rest" class="rest" hidden></div>
