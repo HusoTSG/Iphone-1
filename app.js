@@ -452,7 +452,7 @@ function placeTabInd(animate = true) {
 function mkLiveEx(exId, tpl) {
   const prev = lastSetsFor(exId);
   const n = (tpl && tpl.sets) || (prev && prev.length) || 3;
-  return { exId, target: tpl ? `${tpl.sets} × ${tpl.reps}` : '', kg: (tpl && tpl.kg) || 0, note: (tpl && tpl.note) || '', rest: (tpl && tpl.rest) || S.settings.rest, sets: Array.from({ length: n }, () => ({ kg: '', reps: '', done: false })) };
+  return { exId, target: tpl ? `${tpl.sets} × ${tpl.reps}` : '', repsT: tpl && /^\d+$/.test(String(tpl.reps).trim()) ? String(tpl.reps).trim() : '', kg: (tpl && tpl.kg) || 0, note: (tpl && tpl.note) || '', rest: (tpl && tpl.rest) || S.settings.rest, sets: Array.from({ length: n }, () => ({ kg: '', reps: '', done: false })) };
 }
 function startWorkout(progId, dayId) {
   if (S.live) { ui.liveOpen = true; render(); toast('Une séance est déjà en cours'); return; }
@@ -469,7 +469,7 @@ function liveExCard(e, i) {
   const rows = e.sets.map((s, j) => {
     const p = prev[j];
     const phKg = e.kg ? nf(e.kg, 2) : p ? nf(p.kg, 2) : j > 0 ? e.sets[j - 1].kg : '';
-    const phR = p ? p.reps : j > 0 ? e.sets[j - 1].reps : '';
+    const phR = p ? p.reps : j > 0 && e.sets[j - 1].reps !== '' ? e.sets[j - 1].reps : (e.repsT || '');
     return `<div class="row-wrap ${s.done ? 'done' : ''}"><div class="n">${j + 1}</div><div class="prev">${p ? `${nf(p.kg, 2)}×${p.reps}` : '—'}</div>
       <input type="text" inputmode="decimal" id="ls-${i}-${j}-kg" value="${esc(s.kg)}" placeholder="${esc(phKg)}" data-in="liveSet" data-e="${i}" data-s="${j}" data-f="kg" aria-label="Charge série ${j + 1}">
       <input type="text" inputmode="numeric" id="ls-${i}-${j}-reps" value="${esc(s.reps)}" placeholder="${esc(phR)}" data-in="liveSet" data-e="${i}" data-s="${j}" data-f="reps" aria-label="Répétitions série ${j + 1}">
@@ -752,7 +752,7 @@ const A = {
     if (s.done) { s.done = false; save(); renderLive(); return; }
     const prev = (lastSetsFor(e.exId) || [])[j];
     if (s.kg === '') s.kg = e.kg ? nf(e.kg, 2) : prev ? nf(prev.kg, 2) : j > 0 ? e.sets[j - 1].kg : '';
-    if (s.reps === '') s.reps = prev ? String(prev.reps) : j > 0 ? e.sets[j - 1].reps : '';
+    if (s.reps === '') s.reps = prev ? String(prev.reps) : j > 0 && e.sets[j - 1].reps !== '' ? e.sets[j - 1].reps : (e.repsT || '');
     if (!(num(s.reps) > 0)) { s.reps = ''; toast('Indique le nombre de répétitions'); const i = $(`#ls-${el.dataset.e}-${j}-reps`); if (i) i.focus(); return; }
     if (s.kg === '') s.kg = '0';
     s.done = true; L.restTotal = e.rest; L.restEnd = Date.now() + e.rest * 1000;
