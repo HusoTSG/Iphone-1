@@ -32,6 +32,7 @@ const ICON = {
   down: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>',
   gear: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
   plates: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 12h20"/><rect x="5" y="5" width="3" height="14" rx="1"/><rect x="16" y="5" width="3" height="14" rx="1"/><rect x="8.5" y="8" width="2" height="8" rx="1"/><rect x="13.5" y="8" width="2" height="8" rx="1"/></svg>',
+  clock: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>',
   x: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
   up: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg>',
   play: '<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M7 4.5v15l12.5-7.5z"/></svg>',
@@ -296,19 +297,22 @@ function dayKind(name) {
   return 'other';
 }
 const DAY_LETTER = ['', 'L', 'M', 'M', 'J', 'V', 'S', 'D'];
-// Icône façon appli Forme d'Apple : symbole du type de séance dans un rond teinté
-const KIND_GLYPH = {
-  upper: { col: 'var(--blue)', svg: '<path d="M6.5 7.5v9M17.5 7.5v9M3.8 10v4M20.2 10v4M6.5 12h11"/>' },
-  lower: { col: 'var(--green)', svg: '<path d="M8.5 3.5h5.5l-1.2 7.2 1.9 6.6v2.2h3.8" stroke-width="2.4"/><path d="M8.5 3.5l1.6 7.4-1.4 9.1" stroke-width="2.4"/>' },
-  push: { col: 'var(--orange)', svg: '<path d="M4 6h16M7 4v4M17 4v4"/><path d="M12 20v-9M8.6 14.4 12 11l3.4 3.4"/>' },
-  pull: { col: '#bf5af2', svg: '<path d="M4 4.5h16"/><path d="M12 8v11M8.6 15.6 12 19l3.4-3.4"/>' },
-  leg: { col: '#30b0c7', svg: '<path d="M8.5 3.5h5.5l-1.2 7.2 1.9 6.6v2.2h3.8" stroke-width="2.4"/><path d="M8.5 3.5l1.6 7.4-1.4 9.1" stroke-width="2.4"/>' },
-  other: { col: 'var(--label-2)', svg: '<path d="M6.5 7.5v9M17.5 7.5v9M3.8 10v4M20.2 10v4M6.5 12h11"/>' },
+// Icônes au trait, blanches, façon iOS (type de séance et groupe musculaire)
+const LINE = {
+  dumbbell: '<path d="M6.5 7.5v9M17.5 7.5v9M3.8 10v4M20.2 10v4M6.5 12h11"/>',
+  leg: '<path d="M8.5 3.5h5.5l-1.2 7.2 1.9 6.6v2.2h3.8"/><path d="M8.5 3.5l1.6 7.4-1.4 9.1"/>',
+  push: '<path d="M4 5.5h16M7 3.5v4M17 3.5v4"/><path d="M12 20.5v-10M8.5 14 12 10.5l3.5 3.5"/>',
+  pull: '<path d="M4 4h16"/><path d="M12 7.5v12M8.5 16 12 19.5l3.5-3.5"/>',
+  press: '<path d="M4 4.5h16M7 2.5v4M17 2.5v4"/><path d="M8 20.5v-6l2-3.5M16 20.5v-6l-2-3.5"/><circle cx="12" cy="9" r="1.6"/>',
+  arm: '<path d="M5 19.5c-.6-3.4.6-7 3.2-9.3l2.3-2.2 2.4.8-.7 2.6-2 .4-.9 2.5c2-.9 4.8-.6 6.1 1.5 1.5 2.4-.4 5-3.3 5H6.8c-.9 0-1.6-.6-1.8-1.3z"/>',
+  abs: '<rect x="6.5" y="3.5" width="11" height="17" rx="4"/><path d="M12 3.5v17M6.8 9h10.4M6.8 14.5h10.4"/>',
+  heart: '<path d="M12 20s-7.5-4.6-7.5-10.1A4.3 4.3 0 0 1 12 7.3a4.3 4.3 0 0 1 7.5 2.6C19.5 15.4 12 20 12 20z"/>',
 };
-const dayIcon = (d) => {
-  const k = KIND_GLYPH[dayKind(d.name)];
-  return `<span class="day-fit" style="--c:${k.col}"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${k.svg}</svg></span>`;
-};
+const lineIcon = (k, size = 24) => `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${LINE[k] || LINE.dumbbell}</svg>`;
+const KIND_LINE = { upper: 'dumbbell', lower: 'leg', leg: 'leg', push: 'push', pull: 'pull', other: 'dumbbell' };
+const MUSCLE_LINE = { Pectoraux: 'push', Dos: 'pull', 'Épaules': 'press', Biceps: 'arm', Triceps: 'arm', Quadriceps: 'leg', Ischios: 'leg', Fessiers: 'leg', Mollets: 'leg', Abdos: 'abs', Cardio: 'heart' };
+const dayIcon = (d) => `<span class="line-ic">${lineIcon(KIND_LINE[dayKind(d.name)], 26)}</span>`;
+const exIcon = (ex) => `<span class="ex-ic">${lineIcon(MUSCLE_LINE[ex.muscle] || 'dumbbell', 20)}</span>`;
 const dayLabel = (d) => esc(d.name.replace(/\s·\s/, ' - '));
 
 const views = {};
@@ -319,16 +323,16 @@ views.train = () => {
   const when = (n) => (n.late ? 'À rattraper' : n.inDays === 0 ? 'Aujourd’hui' : n.inDays === 1 ? 'Demain' : 'Prochaine');
   const days = prog ? prog.days.map((d) => {
     const isNext = nx && !S.live && nx.day.id === d.id, isDone = doneSet.has(d.id);
-    const v = isNext ? `<span class="pill blue">${when(nx)}</span>` : isDone ? `<span class="pill done">✓ Fait</span>` : '';
-    return cell({ a: 'dayOpen', cls: `day-pill${isNext ? ' next' : ''}`, data: `data-d="${d.id}"`, badge: dayIcon(d), t: `<b style="font-weight:600">${dayLabel(d)}</b>`, s: `${d.exercises.length} exercices`, v });
+    const v = isNext ? `<span class="tag next">${when(nx)}</span>` : isDone ? `<span class="tag done">✓</span>` : '';
+    return cell({ a: 'dayOpen', cls: `day-row${isNext ? ' next' : ''}`, data: `data-d="${d.id}"`, badge: dayIcon(d), t: dayLabel(d), v });
   }).join('') : '';
   return `<header class="large"><div><h1>Entraînement</h1><div class="sub">${cap(fmtDay(k))}</div></div><button class="icon-btn" data-a="settings" aria-label="Réglages">${ICON.gear}</button></header>
     ${live}
     ${prog ? `<div class="section"><div class="section-h">${esc(prog.name)} · ${doneSet.size}/${prog.days.length} cette semaine</div><div class="day-pills">${days}</div><button class="link" data-a="dayAdd" style="align-self:center">+ Ajouter une journée</button></div>` : '<div class="card"><h2>Aucun programme</h2><p class="muted small" style="margin:0">Crée un programme ou lance une séance libre.</p></div>'}
     <div class="section"><div class="group">
-      ${cell({ a: 'startFree', badge: `<span class="badge green">${ICON.play}</span>`, t: 'Séance libre' })}
-      ${cell({ a: 'exLibrary', badge: `<span class="badge orange">${ICON.trophy}</span>`, t: 'Exercices et records' })}
-      ${cell({ a: 'programs', badge: `<span class="badge gray">${ICON.list}</span>`, t: 'Programmes', v: S.programs.length > 1 ? String(S.programs.length) : '' })}
+      ${cell({ a: 'startFree', badge: `<span class="line-ic">${ICON.play}</span>`, t: 'Séance libre' })}
+      ${cell({ a: 'exLibrary', badge: `<span class="line-ic">${ICON.trophy}</span>`, t: 'Exercices et records' })}
+      ${cell({ a: 'programs', badge: `<span class="line-ic">${ICON.list}</span>`, t: 'Programmes', v: S.programs.length > 1 ? String(S.programs.length) : '' })}
     </div></div>`;
 };
 
@@ -476,23 +480,46 @@ function startWorkout(progId, dayId) {
 let wl = null;
 async function wakeLock() { try { if ('wakeLock' in navigator && !wl) { wl = await navigator.wakeLock.request('screen'); wl.addEventListener('release', () => { wl = null; }); } } catch (e) { wl = null; } }
 
+const cleanNote = (n) => String(n || '').replace(/^\s*1-2 RIR\s*(·\s*)?/i, '').trim();
 function liveExCard(e, i) {
   const ex = exById(e.exId), prev = lastSetsFor(e.exId) || [];
+  const done = e.sets.filter((s) => s.done).length, allDone = done === e.sets.length && done > 0;
+  if (allDone && e.collapsed !== false) {
+    const best = e.sets.reduce((a, s) => Math.max(a, num(s.kg) || 0), 0);
+    return `<button class="exc folded" data-a="liveExpand" data-e="${i}">${exIcon(ex)}<span class="grow"><span class="fn">${esc(ex.name)}</span><span class="fs">${done} séries${best ? ` · ${nf(best, 2)} kg` : ''}</span></span><span class="fok">${ICON.check}</span></button>`;
+  }
   const rows = e.sets.map((s, j) => {
     const p = prev[j];
     const phKg = e.kg ? nf(e.kg, 2) : p ? nf(p.kg, 2) : j > 0 ? e.sets[j - 1].kg : '';
     const phR = p ? p.reps : j > 0 && e.sets[j - 1].reps !== '' ? e.sets[j - 1].reps : (e.repsT || '');
-    return `<div class="row-wrap ${s.done ? 'done' : ''}"><div class="n">${j + 1}</div><div class="prev">${p ? `${nf(p.kg, 2)}×${p.reps}` : '—'}</div>
-      <input type="text" inputmode="decimal" id="ls-${i}-${j}-kg" value="${esc(s.kg)}" placeholder="${esc(phKg)}" data-in="liveSet" data-e="${i}" data-s="${j}" data-f="kg" aria-label="Charge série ${j + 1}">
+    return `<div class="row-wrap ${s.done ? 'done' : ''}">
       <input type="text" inputmode="numeric" id="ls-${i}-${j}-reps" value="${esc(s.reps)}" placeholder="${esc(phR)}" data-in="liveSet" data-e="${i}" data-s="${j}" data-f="reps" aria-label="Répétitions série ${j + 1}">
+      <input type="text" inputmode="decimal" id="ls-${i}-${j}-kg" value="${esc(s.kg)}" placeholder="${esc(phKg)}" data-in="liveSet" data-e="${i}" data-s="${j}" data-f="kg" aria-label="Charge série ${j + 1}">
       <button class="tick ${s.done ? 'on' : ''}" data-a="liveToggle" data-e="${i}" data-s="${j}" aria-label="Valider la série ${j + 1}">${ICON.check}</button></div>`;
   }).join('');
-  return `<div class="exc"><div class="hd"><div class="grow"><h3>${esc(ex.name)}</h3><div class="meta">${e.target ? esc(e.target) : ''}${e.kg ? ` · <b>${nf(e.kg, 2)} kg</b>` : ''}${e.note ? ` · ${esc(e.note)}` : ''} · repos ${fmtRest(e.rest)}</div></div>
-      <button class="icon-btn plain" data-a="platesLive" data-e="${i}" aria-label="Disques à charger">${ICON.plates}</button>
-      <button class="icon-btn plain gray" data-a="liveRemoveEx" data-e="${i}" aria-label="Retirer l’exercice">${ICON.x}</button></div>
-    <div class="sets"><div class="h">#</div><div class="h">Préc.</div><div class="h">kg</div><div class="h">Reps</div><div class="h"></div>${rows}</div>
-    <div class="row"><button class="btn sm" data-a="liveAddSet" data-e="${i}">+ Série</button>${e.sets.length > 1 ? `<button class="btn sm" data-a="liveDelSet" data-e="${i}" style="color:var(--label-2)">− Série</button>` : ''}</div></div>`;
+  const note = cleanNote(e.note);
+  const meta = [e.target ? esc(e.target) : '', e.kg ? `<b>${nf(e.kg, 2)} kg</b>` : '', note ? esc(note) : ''].filter(Boolean).join(' · ');
+  return `<div class="exc"><div class="hd">${exIcon(ex)}<div class="grow"><h3>${esc(ex.name)}</h3>${meta ? `<div class="meta">${meta}</div>` : ''}</div>
+      <button class="icon-btn plain" data-a="exHist" data-e="${i}" aria-label="Historique et options">${ICON.clock}</button>
+      ${allDone ? `<button class="icon-btn plain" data-a="liveCollapse" data-e="${i}" aria-label="Réduire">${ICON.up}</button>` : ''}</div>
+    <div class="sets"><div class="h">Reps</div><div class="h">kg</div><div class="h"></div>${rows}</div>
+    <button class="link small" data-a="liveAddSet" data-e="${i}" style="align-self:flex-start;padding:0">+ Ajouter une série</button></div>`;
 }
+
+// Historique complet d'un exercice + options (disques, séries, retirer)
+function exHistSheet(i) {
+  const e = S.live.exercises[i], ex = exById(e.exId), h = exerciseHistory(e.exId).slice().reverse();
+  openSheet({
+    render: () => `${sheetHead(esc(ex.name))}
+      ${h.length ? `<div class="group">${h.map((x) => cell({ t: fmtShort(x.date), s: x.sets.map((s) => `${s.reps} × ${nf(s.kg, 2)} kg`).join('<br>'), chev: false })).join('')}</div>` : '<div class="empty" style="text-align:center">Pas encore d’historique pour cet exercice.</div>'}
+      <div class="group">
+        ${cell({ a: 'platesLive', data: `data-e="${i}"`, t: 'Disques à charger' })}
+        ${e.sets.length > 1 ? cell({ a: 'liveDelSet', data: `data-e="${i}"`, t: 'Retirer la dernière série', chev: false }) : ''}
+        <button class="cell danger" data-a="liveRemoveEx" data-e="${i}">Retirer de la séance</button>
+      </div>`,
+  });
+}
+
 function renderLive() {
   const root = $('#live');
   if (!S.live || !ui.liveOpen) { root.hidden = true; root.innerHTML = ''; document.body.style.overflow = ''; renderRest(); return; }
@@ -768,14 +795,18 @@ const A = {
     if (!(num(s.reps) > 0)) { s.reps = ''; toast('Indique le nombre de répétitions'); const i = $(`#ls-${el.dataset.e}-${j}-reps`); if (i) i.focus(); return; }
     if (s.kg === '') s.kg = '0';
     s.done = true; L.restTotal = e.rest; L.restEnd = Date.now() + e.rest * 1000;
+    if (e.sets.every((x) => x.done)) e.collapsed = true;
     save(); renderLive();
     if (S.settings.iosTimer) runIosTimer(e.rest);
   },
-  liveAddSet(el) { S.live.exercises[+el.dataset.e].sets.push({ kg: '', reps: '', done: false }); save(); renderLive(); },
-  liveDelSet(el) { const e = S.live.exercises[+el.dataset.e]; if (e.sets.length > 1) e.sets.pop(); save(); renderLive(); },
+  liveExpand(el) { S.live.exercises[+el.dataset.e].collapsed = false; save(); renderLive(); },
+  liveCollapse(el) { S.live.exercises[+el.dataset.e].collapsed = true; save(); renderLive(); },
+  exHist(el) { exHistSheet(+el.dataset.e); },
+  liveAddSet(el) { const e = S.live.exercises[+el.dataset.e]; e.sets.push({ kg: '', reps: '', done: false }); e.collapsed = false; save(); renderLive(); },
+  liveDelSet(el) { const e = S.live.exercises[+el.dataset.e]; if (e.sets.length > 1) e.sets.pop(); save(); if (sheets.length) closeSheet(); renderLive(); },
   liveRemoveEx(el) {
     const i = +el.dataset.e, e = S.live.exercises[i];
-    const go = () => { S.live.exercises.splice(i, 1); save(); renderLive(); };
+    const go = () => { S.live.exercises.splice(i, 1); save(); closeAllSheets(); renderLive(); };
     if (e.sets.some((s) => s.done)) confirmSheet({ title: `Retirer ${esc(exById(e.exId).name)} ?`, text: 'Les séries validées seront perdues.', ok: 'Retirer', onOk: go }); else go();
   },
   liveAddEx() { exSearchSheet({ title: 'Exercice', onPick: (id) => { S.live.exercises.push(mkLiveEx(id, null)); save(); renderLive(); setTimeout(() => { const l = $('.live'); if (l) l.scrollTo({ top: l.scrollHeight, behavior: 'smooth' }); }, 50); } }); },

@@ -655,3 +655,36 @@ h2 { font-family: var(--font-display); font-weight: 700; letter-spacing: 0.2px; 
   width: 48px; height: 48px; border-radius: 50%; flex: none; display: flex; align-items: center; justify-content: center;
   color: var(--c); background: color-mix(in srgb, var(--c) 16%, transparent);
 }
+
+/* ===== Épuré : rectangles arrondis + icônes au trait ===== */
+.line-ic { width: 30px; height: 30px; flex: none; display: flex; align-items: center; justify-content: center; color: var(--label); }
+.day-pills { gap: 10px; }
+.day-row {
+  border-radius: 16px; min-height: 62px; padding: 14px 16px; gap: 14px;
+  background: var(--card); border: 1px solid var(--sep); box-shadow: none;
+}
+.day-row .t { font-size: 17px; font-weight: 500; }
+.day-row:active { background: var(--fill-2); }
+.day-row.next { border-color: color-mix(in srgb, var(--blue) 55%, transparent); }
+.tag { font-size: 13px; font-weight: 600; white-space: nowrap; }
+.tag.next { color: var(--blue); }
+.tag.done { color: var(--green); font-size: 16px; }
+
+/* Séance : carte épurée */
+.ex-ic { width: 34px; height: 34px; border-radius: 10px; flex: none; display: flex; align-items: center; justify-content: center; color: var(--label); background: var(--fill); }
+.exc .hd { align-items: center; gap: 12px; }
+.exc .hd h3 { font-size: 17px; font-weight: 600; }
+.exc .meta { margin-top: 2px; }
+.sets { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 44px; gap: 8px 10px; }
+.sets .h { text-align: center; }
+.link.small { font-size: 15px; font-weight: 500; }
+.exc.folded {
+  flex-direction: row; align-items: center; gap: 12px; padding: 12px 14px; text-align: left; width: 100%; color: var(--label);
+  font: inherit; cursor: pointer;
+}
+.exc.folded .grow { display: flex; flex-direction: column; min-width: 0; }
+.exc.folded .fn { font-size: 16px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.exc.folded .fs { font-size: 13px; color: var(--label-2); }
+.exc.folded .fok { width: 28px; height: 28px; border-radius: 50%; background: var(--green); color: #fff; display: flex; align-items: center; justify-content: center; flex: none; }
+.exc.folded .fok svg { width: 15px; height: 15px; }
+.exc.folded .ex-ic { width: 30px; height: 30px; }
