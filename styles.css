@@ -688,3 +688,6 @@ h2 { font-family: var(--font-display); font-weight: 700; letter-spacing: 0.2px; 
 .exc.folded .fok { width: 28px; height: 28px; border-radius: 50%; background: var(--green); color: #fff; display: flex; align-items: center; justify-content: center; flex: none; }
 .exc.folded .fok svg { width: 15px; height: 15px; }
 .exc.folded .ex-ic { width: 30px; height: 30px; }
+.ex-row { min-height: 56px; padding: 11px 14px; }
+.ex-row .t { font-size: 16px; font-weight: 500; }
+.ex-row .ex-ic { background: transparent; width: 28px; }

@@ -669,7 +669,7 @@ function daySheet(dayId) {
     render() {
       const dy = this.dy; if (!dy) return sheetHead('');
       return `${sheetHead(esc(dy.name), '<button class="link b" data-a="dayEdit">Modifier</button>')}
-        <div class="group">${dy.exercises.map((e) => { const p = lastSetsFor(e.exId); return cell({ t: esc(exById(e.exId).name), s: `${exLine(e)}${e.note ? ' · ' + esc(e.note) : ''}${p ? `<br>Dernière fois : ${p.map((s) => `${nf(s.kg, 2)}×${s.reps}`).join(' · ')}` : ''}`, chev: false }); }).join('') || '<div class="cell"><span class="empty">Aucun exercice.</span></div>'}</div>
+        <div class="day-pills">${dy.exercises.map((e) => `<div class="cell day-row ex-row">${exIcon(exById(e.exId))}<span class="main"><span class="t">${esc(exById(e.exId).name)}</span></span></div>`).join('') || '<div class="empty">Aucun exercice.</div>'}</div>
         <button class="btn filled block" data-a="startWorkout" data-p="${activeProgram().id}" data-d="${dy.id}">${ICON.play} Commencer</button>`;
     },
   });
