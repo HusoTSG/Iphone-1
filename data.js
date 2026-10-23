@@ -12,7 +12,7 @@ const EXERCISES = [
   { id: 'cable-fly', name: 'Écartés poulie vis-à-vis', muscle: 'Pectoraux', equip: 'Poulie' },
   { id: 'smith-decline', name: 'Développé décliné Smith machine', muscle: 'Pectoraux', equip: 'Machine' },
   { id: 'seated-fly', name: 'Pec fly machine', muscle: 'Pectoraux', equip: 'Machine' },
-  { id: 'decline-press-machine', name: 'Développé décliné machine', muscle: 'Pectoraux', equip: 'Machine' },
+  { id: 'decline-press-machine', name: 'Décliné chest press machine', muscle: 'Pectoraux', equip: 'Machine' },
   { id: 'dips', name: 'Dips', muscle: 'Pectoraux', equip: 'Poids du corps' },
   { id: 'pushup', name: 'Pompes', muscle: 'Pectoraux', equip: 'Poids du corps' },
   // Dos
@@ -84,7 +84,7 @@ const EXERCISES = [
 const COACH_PROGRAM = {
   id: 'coach',
   name: 'Programme coach',
-  version: 3,
+  version: 4,
   days: [
     { id: 'mon-upper', name: 'Lundi · Upper', weekday: 1, exercises: [
       { exId: 'lat-pulldown', sets: 3, reps: '8-12', kg: 36.5, rest: 120, note: '1-2 RIR' },
