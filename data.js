@@ -12,6 +12,8 @@ const EXERCISES = [
   { id: 'chest-press', name: 'Chest press machine', muscle: 'Pectoraux', equip: 'Machine' },
   { id: 'cable-fly', name: 'Écartés poulie vis-à-vis', muscle: 'Pectoraux', equip: 'Poulie' },
   { id: 'pec-deck', name: 'Pec deck', muscle: 'Pectoraux', equip: 'Machine' },
+  { id: 'smith-decline', name: 'Développé décliné Smith machine', muscle: 'Pectoraux', equip: 'Machine' },
+  { id: 'seated-fly', name: 'Écartés assis machine', muscle: 'Pectoraux', equip: 'Machine' },
   { id: 'dips', name: 'Dips', muscle: 'Pectoraux', equip: 'Poids du corps' },
   { id: 'pushup', name: 'Pompes', muscle: 'Pectoraux', equip: 'Poids du corps' },
   // Dos
@@ -28,6 +30,7 @@ const EXERCISES = [
   { id: 'db-shoulder', name: 'Développé épaules haltères', muscle: 'Épaules', equip: 'Haltères' },
   { id: 'lateral-raise', name: 'Élévations latérales', muscle: 'Épaules', equip: 'Haltères' },
   { id: 'cable-lateral', name: 'Élévations latérales poulie', muscle: 'Épaules', equip: 'Poulie' },
+  { id: 'seated-lateral-bent', name: 'Élévations latérales assis bras fléchis', muscle: 'Épaules', equip: 'Haltères' },
   { id: 'rear-delt', name: 'Oiseau (deltoïde arrière)', muscle: 'Épaules', equip: 'Haltères' },
   { id: 'face-pull', name: 'Face pull', muscle: 'Épaules', equip: 'Poulie' },
   { id: 'shrug', name: 'Shrugs', muscle: 'Épaules', equip: 'Haltères' },
@@ -40,6 +43,7 @@ const EXERCISES = [
   { id: 'preacher-curl', name: 'Curl pupitre', muscle: 'Biceps', equip: 'Machine' },
   // Triceps
   { id: 'triceps-pushdown', name: 'Extensions triceps poulie', muscle: 'Triceps', equip: 'Poulie' },
+  { id: 'rope-pushdown', name: 'Extensions triceps poulie à la corde', muscle: 'Triceps', equip: 'Poulie' },
   { id: 'overhead-ext', name: 'Extensions au-dessus de la tête', muscle: 'Triceps', equip: 'Poulie' },
   { id: 'skullcrusher', name: 'Barre au front', muscle: 'Triceps', equip: 'Barre' },
   { id: 'close-grip', name: 'Développé couché prise serrée', muscle: 'Triceps', equip: 'Barre' },
@@ -187,3 +191,35 @@ const SEED_HABITS = [
   { id: 'h-veg', name: '5 portions de fruits et légumes' },
   { id: 'h-stretch', name: 'Étirements 10 min' },
 ];
+
+// Programme envoyé par le coach. À chaque nouvelle semaine : changer les cibles,
+// ajouter la séance faite dans "log" et augmenter "version". L'appli se met à jour seule.
+// weekday : 1 = lundi … 7 = dimanche. kg = charge cible.
+const COACH_PROGRAM = {
+  id: 'coach',
+  name: 'Programme coach',
+  version: 1,
+  days: [
+    { id: 'mon-upper', name: 'Lundi · Upper', weekday: 1, exercises: [
+      { exId: 'lat-pulldown', sets: 3, reps: '8-12', kg: 36.5, rest: 120, note: '1-2 RIR' },
+      { exId: 'seated-row', sets: 3, reps: '8-12', kg: 57, rest: 120, note: '1-2 RIR' },
+      { exId: 'smith-decline', sets: 3, reps: '8-12', kg: 35, rest: 120, note: '1-2 RIR' },
+      { exId: 'seated-fly', sets: 3, reps: '10-15', kg: 62.2, rest: 90, note: '1-2 RIR' },
+      { exId: 'seated-lateral-bent', sets: 3, reps: '10-15', kg: 8, rest: 90, note: '1-2 RIR' },
+      { exId: 'incline-curl', sets: 3, reps: '8-12', kg: 12, rest: 90, note: '1-2 RIR' },
+      { exId: 'rope-pushdown', sets: 3, reps: '10-15', kg: 18.7, rest: 90, note: '1-2 RIR' },
+    ] },
+  ],
+  // Séances déjà faites, pour que la colonne « Préc. » et les courbes partent de là.
+  log: [
+    { date: '2026-10-19', dayId: 'mon-upper', name: 'Lundi · Upper', exercises: [
+      { exId: 'lat-pulldown', sets: [[36.5, 10], [36.2, 10], [36.2, 10]] },
+      { exId: 'seated-row', sets: [[57, 8], [57, 8], [57, 8]] },
+      { exId: 'smith-decline', sets: [[35, 6], [35, 6], [35, 6]] },
+      { exId: 'seated-fly', sets: [[62.2, 12], [62.2, 13], [62.2, 13]] },
+      { exId: 'seated-lateral-bent', sets: [[8, 15], [8, 15], [8, 15]] },
+      { exId: 'incline-curl', sets: [[12, 8], [12, 8], [12, 8]] },
+      { exId: 'rope-pushdown', sets: [[18.7, 13], [18.7, 13], [18.7, 13]] },
+    ] },
+  ],
+};

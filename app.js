@@ -157,6 +157,18 @@ function sessionSets(s) { return s.exercises.reduce((a, e) => a + e.sets.length,
 function nextWorkout() {
   const prog = activeProgram();
   if (!prog || !prog.days.length) return null;
+  if (prog.days.some((d) => d.weekday)) {
+    const today = ((new Date().getDay() + 6) % 7) + 1;
+    const doneToday = S.sessions.some((s) => s.date === dkey() && s.programId === prog.id);
+    let best = null, bestDist = 99;
+    prog.days.forEach((d) => {
+      if (!d.weekday) return;
+      let dist = (d.weekday - today + 7) % 7;
+      if (dist === 0 && doneToday) dist = 7;
+      if (dist < bestDist) { bestDist = dist; best = d; }
+    });
+    if (best) return { prog, day: best, inDays: bestDist };
+  }
   const last = sessionsSorted().find((s) => s.programId === prog.id);
   let idx = 0;
   if (last) { const i = prog.days.findIndex((d) => d.id === last.dayId); idx = i < 0 ? 0 : (i + 1) % prog.days.length; }
@@ -300,8 +312,8 @@ views.home = () => {
     workout = `<div class="card" id="liveBanner"><div class="card-head"><div class="grow"><div class="eyebrow">Séance en cours</div><h2>${esc(S.live.name)}</h2></div><span class="clock">${fmtClock((Date.now() - S.live.startedAt) / 1000)}</span></div><button class="btn primary block" data-a="liveOpen">Reprendre la séance</button></div>`;
   } else if (nx) {
     const exs = nx.day.exercises;
-    workout = `<div class="card"><div class="card-head"><div class="grow"><div class="eyebrow">${doneToday.length ? 'Fait aujourd’hui · prochaine séance' : 'Séance du jour'}</div><h2>${esc(nx.day.name)}</h2><div class="small muted">${esc(nx.prog.name)} · ${exs.length} exercice${exs.length > 1 ? 's' : ''}</div></div>${doneToday.length ? '<span class="pill acc">✓ Fait</span>' : ''}</div>
-      <div class="list">${exs.slice(0, 5).map((e) => `<div class="item" style="padding:8px 0"><span class="grow">${esc(exById(e.exId).name)}</span><span class="s num">${e.sets} × ${esc(e.reps)}</span></div>`).join('')}${exs.length > 5 ? `<div class="small muted" style="padding-top:6px">+ ${exs.length - 5} autre${exs.length - 5 > 1 ? 's' : ''}</div>` : ''}</div>
+    workout = `<div class="card"><div class="card-head"><div class="grow"><div class="eyebrow">${nx.inDays ? `Prochaine séance · ${nx.inDays === 1 ? 'demain' : `dans ${nx.inDays} jours`}` : doneToday.length ? 'Fait aujourd’hui · prochaine séance' : 'Séance du jour'}</div><h2>${esc(nx.day.name)}</h2><div class="small muted">${esc(nx.prog.name)} · ${exs.length} exercice${exs.length > 1 ? 's' : ''}</div></div>${doneToday.length ? '<span class="pill acc">✓ Fait</span>' : ''}</div>
+      <div class="list">${exs.slice(0, 5).map((e) => `<div class="item" style="padding:8px 0"><span class="grow">${esc(exById(e.exId).name)}</span><span class="s num">${e.sets} × ${esc(e.reps)}${e.kg ? ` · ${nf(e.kg, 2)} kg` : ''}</span></div>`).join('')}${exs.length > 5 ? `<div class="small muted" style="padding-top:6px">+ ${exs.length - 5} autre${exs.length - 5 > 1 ? 's' : ''}</div>` : ''}</div>
       <div class="row"><button class="btn primary grow" data-a="startWorkout" data-p="${nx.prog.id}" data-d="${nx.day.id}">Démarrer</button><button class="btn" data-a="startFree">Séance libre</button></div></div>`;
   } else {
     workout = `<div class="card"><h2>Aucun programme</h2><p class="muted" style="margin:0">Crée un programme dans l’onglet Entraînement, ou lance une séance libre.</p><button class="btn primary" data-a="startFree">Séance libre</button></div>`;
@@ -362,7 +374,7 @@ function trainProgram() {
     <div class="row wrap"><button class="btn sm" data-a="progNew">Nouveau</button>${prog ? `<button class="btn sm" data-a="progRename">Renommer</button><button class="btn sm danger" data-a="progDelete">Supprimer</button>` : ''}</div></div>`;
   if (!prog) return sel + '<div class="card"><div class="empty">Crée ton premier programme.</div></div>';
   const days = prog.days.map((dy) => `<div class="card"><div class="card-head"><div class="grow"><h2>${esc(dy.name)}</h2><div class="small muted">${dy.exercises.length} exercice${dy.exercises.length > 1 ? 's' : ''}</div></div>${nx && nx.day.id === dy.id ? '<span class="pill acc">Prochaine</span>' : ''}</div>
-    <div class="list">${dy.exercises.map((e) => `<div class="item" style="padding:8px 0"><span class="grow">${esc(exById(e.exId).name)}</span><span class="s num">${e.sets} × ${esc(e.reps)} · ${fmtRest(e.rest)}</span></div>`).join('') || '<div class="empty">Aucun exercice pour l’instant.</div>'}</div>
+    <div class="list">${dy.exercises.map((e) => `<div class="item" style="padding:8px 0"><span class="grow">${esc(exById(e.exId).name)}</span><span class="s num">${e.sets} × ${esc(e.reps)}${e.kg ? ` · ${nf(e.kg, 2)} kg` : ''} · ${fmtRest(e.rest)}</span></div>`).join('') || '<div class="empty">Aucun exercice pour l’instant.</div>'}</div>
     <div class="row"><button class="btn primary grow" data-a="startWorkout" data-p="${prog.id}" data-d="${dy.id}">Démarrer</button><button class="btn" data-a="dayEdit" data-d="${dy.id}">Modifier</button></div></div>`).join('');
   return `${sel}${days}<button class="btn block" data-a="dayAdd">+ Ajouter une journée</button><button class="btn block ghost" data-a="startFree">Lancer une séance libre</button>`;
 }
@@ -374,7 +386,7 @@ function trainHistory() {
   ss.forEach((s) => {
     const m = cap(parseKey(s.date).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }));
     if (m !== month) { if (month) html += '</div></div>'; month = m; html += `<div class="card"><h3>${m}</h3><div class="list">`; }
-    html += `<button class="item" data-a="sessionOpen" data-id="${s.id}"><div class="grow"><div class="t">${esc(s.name)}</div><div class="s num">${cap(fmtShort(s.date))} · ${fmtDur(s.duration)} · ${sessionSets(s)} séries · ${nf(sessionVolume(s))} kg</div></div>${s.prs && s.prs.length ? `<span class="pill pr">${s.prs.length} PR</span>` : ''}</button>`;
+    html += `<button class="item" data-a="sessionOpen" data-id="${s.id}"><div class="grow"><div class="t">${esc(s.name)}</div><div class="s num">${cap(fmtShort(s.date))} · ${s.duration ? fmtDur(s.duration) + ' · ' : ''}${sessionSets(s)} séries · ${nf(sessionVolume(s))} kg</div></div>${s.prs && s.prs.length ? `<span class="pill pr">${s.prs.length} PR</span>` : ''}</button>`;
   });
   return html + '</div></div>';
 }
@@ -564,7 +576,7 @@ function render() {
 function mkLiveEx(exId, tpl) {
   const prev = lastSetsFor(exId);
   const n = (tpl && tpl.sets) || (prev && prev.length) || 3;
-  return { exId, target: tpl ? `${tpl.sets} × ${tpl.reps}` : '', rest: (tpl && tpl.rest) || S.settings.rest, sets: Array.from({ length: n }, () => ({ kg: '', reps: '', done: false })) };
+  return { exId, target: tpl ? `${tpl.sets} × ${tpl.reps}` : '', kg: (tpl && tpl.kg) || 0, note: (tpl && tpl.note) || '', rest: (tpl && tpl.rest) || S.settings.rest, sets: Array.from({ length: n }, () => ({ kg: '', reps: '', done: false })) };
 }
 
 function startWorkout(progId, dayId) {
@@ -588,14 +600,14 @@ function liveExCard(e, i) {
   const prev = lastSetsFor(e.exId) || [];
   const rows = e.sets.map((s, j) => {
     const p = prev[j];
-    const phKg = p ? nf(p.kg, 2) : j > 0 && e.sets[j - 1].kg !== '' ? e.sets[j - 1].kg : '';
+    const phKg = e.kg ? nf(e.kg, 2) : p ? nf(p.kg, 2) : j > 0 && e.sets[j - 1].kg !== '' ? e.sets[j - 1].kg : '';
     const phR = p ? p.reps : j > 0 && e.sets[j - 1].reps !== '' ? e.sets[j - 1].reps : '';
     return `<div class="row-wrap ${s.done ? 'done' : ''}"><div class="n">${j + 1}</div><div class="prev num">${p ? `${nf(p.kg, 2)}×${p.reps}` : '—'}</div>
       <input type="text" inputmode="decimal" id="ls-${i}-${j}-kg" value="${esc(s.kg)}" placeholder="${esc(phKg)}" data-in="liveSet" data-e="${i}" data-s="${j}" data-f="kg" aria-label="Charge série ${j + 1}">
       <input type="text" inputmode="numeric" id="ls-${i}-${j}-reps" value="${esc(s.reps)}" placeholder="${esc(phR)}" data-in="liveSet" data-e="${i}" data-s="${j}" data-f="reps" aria-label="Répétitions série ${j + 1}">
       <button class="check ${s.done ? 'on' : ''}" data-a="liveToggle" data-e="${i}" data-s="${j}" aria-label="Valider la série ${j + 1}">${s.done ? ICON.check : ''}</button></div>`;
   }).join('');
-  return `<div class="card"><div class="card-head"><div class="grow"><h3>${esc(ex.name)}</h3><div class="small muted">${e.target ? esc(e.target) + ' · ' : ''}repos ${fmtRest(e.rest)}</div></div>
+  return `<div class="card"><div class="card-head"><div class="grow"><h3>${esc(ex.name)}</h3><div class="small muted">${e.target ? esc(e.target) + ' · ' : ''}${e.kg ? `<b style="color:var(--fg)">${nf(e.kg, 2)} kg</b> · ` : ''}${e.note ? esc(e.note) + ' · ' : ''}repos ${fmtRest(e.rest)}</div></div>
       <button class="icon-btn plain" data-a="platesLive" data-e="${i}" aria-label="Calculer les disques">${ICON.plates}</button>
       <button class="icon-btn plain" data-a="liveRemoveEx" data-e="${i}" aria-label="Retirer l’exercice">${ICON.x}</button></div>
     <div class="sets"><div class="h">Série</div><div class="h">Préc.</div><div class="h">kg</div><div class="h">Reps</div><div class="h">OK</div>${rows}</div>
@@ -746,9 +758,11 @@ function dayEditSheet(progId, dayId) {
           <button class="icon-btn plain" data-a="dayMove" data-i="${i}" data-v="-1" aria-label="Monter" ${i === 0 ? 'disabled style="opacity:.3"' : ''}>${ICON.up}</button>
           <button class="icon-btn plain" data-a="dayMove" data-i="${i}" data-v="1" aria-label="Descendre" style="transform:rotate(180deg);${i === dy.exercises.length - 1 ? 'opacity:.3' : ''}" ${i === dy.exercises.length - 1 ? 'disabled' : ''}>${ICON.up}</button>
           <button class="icon-btn plain" data-a="dayExDel" data-i="${i}" aria-label="Retirer">${ICON.x}</button></div>
-        <div class="grid3"><div class="field"><label for="de-${i}-s">Séries</label><input type="text" inputmode="numeric" id="de-${i}-s" value="${e.sets}" data-in="dayEx" data-i="${i}" data-f="sets"></div>
+        <div class="grid2"><div class="field"><label for="de-${i}-s">Séries</label><input type="text" inputmode="numeric" id="de-${i}-s" value="${e.sets}" data-in="dayEx" data-i="${i}" data-f="sets"></div>
           <div class="field"><label for="de-${i}-r">Reps</label><input type="text" id="de-${i}-r" value="${esc(e.reps)}" data-in="dayEx" data-i="${i}" data-f="reps"></div>
-          <div class="field"><label for="de-${i}-t">Repos (s)</label><input type="text" inputmode="numeric" id="de-${i}-t" value="${e.rest}" data-in="dayEx" data-i="${i}" data-f="rest"></div></div></div>`).join('');
+          <div class="field"><label for="de-${i}-k">Charge cible (kg)</label><input type="text" inputmode="decimal" id="de-${i}-k" value="${e.kg ? nf(e.kg, 2) : ''}" placeholder="—" data-in="dayEx" data-i="${i}" data-f="kg"></div>
+          <div class="field"><label for="de-${i}-t">Repos (s)</label><input type="text" inputmode="numeric" id="de-${i}-t" value="${e.rest}" data-in="dayEx" data-i="${i}" data-f="rest"></div></div>
+        <div class="field"><label for="de-${i}-n">Note</label><input type="text" id="de-${i}-n" value="${esc(e.note || '')}" placeholder="Ex. : 1-2 RIR, tempo 3-1-1" data-in="dayEx" data-i="${i}" data-f="note"></div></div>`).join('');
       return `${sheetHead('Modifier la journée', esc(this.prog.name))}<div class="field"><label for="day-name">Nom</label><input type="text" id="day-name" value="${esc(dy.name)}" data-in="dayName"></div>
         ${rows || '<div class="empty">Aucun exercice.</div>'}
         <button class="btn block" data-a="dayExAdd">+ Ajouter un exercice</button>
@@ -770,7 +784,7 @@ function sessionSheet(id) {
   if (!s) return;
   openSheet({
     sid: id,
-    render: () => `${sheetHead(esc(s.name), `${cap(fmtDay(s.date))} · ${fmtDur(s.duration)}`)}
+    render: () => `${sheetHead(esc(s.name), `${cap(fmtDay(s.date))}${s.duration ? ' · ' + fmtDur(s.duration) : ''}`)}
       <div class="grid3"><div class="stat"><span class="label">Séries</span><span class="v">${sessionSets(s)}</span></div><div class="stat"><span class="label">Volume</span><span class="v">${nf(sessionVolume(s))}<small>kg</small></span></div><div class="stat"><span class="label">Records</span><span class="v">${(s.prs || []).length}</span></div></div>
       ${s.exercises.map((e) => `<div class="card" style="gap:6px"><div class="row"><b class="grow">${esc(exById(e.exId).name)}</b>${(s.prs || []).includes(e.exId) ? '<span class="pill pr">PR</span>' : ''}</div><div class="small num">${e.sets.map((st, i) => `<div class="row" style="justify-content:space-between;padding:3px 0"><span class="muted">Série ${i + 1}</span><span>${nf(st.kg, 2)} kg × ${st.reps}</span></div>`).join('')}</div></div>`).join('')}
       <button class="btn danger block" data-a="sessionDel">Supprimer cette séance</button>`,
@@ -973,7 +987,7 @@ const A = {
     const L = S.live, e = L.exercises[+el.dataset.e], j = +el.dataset.s, s = e.sets[j];
     if (s.done) { s.done = false; save(); renderLive(); return; }
     const prev = (lastSetsFor(e.exId) || [])[j];
-    if (s.kg === '') s.kg = prev ? nf(prev.kg, 2) : j > 0 ? e.sets[j - 1].kg : '';
+    if (s.kg === '') s.kg = e.kg ? nf(e.kg, 2) : prev ? nf(prev.kg, 2) : j > 0 ? e.sets[j - 1].kg : '';
     if (s.reps === '') s.reps = prev ? String(prev.reps) : j > 0 ? e.sets[j - 1].reps : '';
     if (s.reps === '' || !(num(s.reps) > 0)) { toast('Indique le nombre de répétitions.'); const i = $(`#ls-${el.dataset.e}-${j}-reps`); i && i.focus(); return; }
     if (s.kg === '') s.kg = '0';
@@ -1112,7 +1126,7 @@ const A = {
   wipe() {
     confirmSheet({
       title: 'Tout effacer ?', text: 'Séances, journal, pesées, photos et bilans seront supprimés de cet iPhone. Exporte une sauvegarde avant si besoin.', ok: 'Tout effacer',
-      onOk: async () => { for (const p of S.photos) await Store.del('photo:' + p.id); photoCache.clear(); S = defaultState(); await save(true); applyTheme(); ui.tab = 'home'; render(); calcSheet(true); },
+      onOk: async () => { for (const p of S.photos) await Store.del('photo:' + p.id); photoCache.clear(); S = defaultState(); syncCoach(); await save(true); applyTheme(); ui.tab = 'home'; render(); calcSheet(true); },
     });
   },
 };
@@ -1125,7 +1139,7 @@ const IN = {
   foodQuery(el) { const c = topSheet(); c.query = el.value; $('#foodRes', c.el).innerHTML = c.results(); },
   qty(el) { const c = topSheet(); c.qty = num(el.value) || 0; $('#qPrev', c.el).innerHTML = c.preview(); },
   dayName(el) { const c = topSheet(); c.dy.name = el.value.trim() || c.dy.name; save(); },
-  dayEx(el) { const c = topSheet(); const e = c.dy.exercises[+el.dataset.i]; const f = el.dataset.f; if (f === 'reps') e.reps = el.value.trim() || e.reps; else { const v = Math.round(num(el.value)); if (v > 0) e[f] = v; } save(); },
+  dayEx(el) { const c = topSheet(); const e = c.dy.exercises[+el.dataset.i]; const f = el.dataset.f; if (f === 'reps') e.reps = el.value.trim() || e.reps; else if (f === 'note') e.note = el.value.trim(); else if (f === 'kg') { const v = num(el.value); e.kg = v > 0 ? v : 0; } else { const v = Math.round(num(el.value)); if (v > 0) e[f] = v; } save(); },
   plateKg(el) { const c = topSheet(); c.kg = num(el.value) || 0; $('#plRes', c.el).innerHTML = c.result(); },
   calcP(el) {
     const c = topSheet(); const k = el.dataset.k;
@@ -1171,6 +1185,7 @@ const CH = {
         title: 'Remplacer les données ?', text: `La sauvegarde du ${new Date(data.exportedAt).toLocaleDateString('fr-FR')} remplacera tout ce qui est sur cet iPhone.`, ok: 'Importer',
         onOk: async () => {
           S = Object.assign(defaultState(), data.state);
+          syncCoach();
           for (const [id, v] of Object.entries(data.photos || {})) { await Store.set('photo:' + id, v); photoCache.set(id, v); }
           await save(true); applyTheme(); render(); toast('Sauvegarde importée.');
         },
@@ -1229,6 +1244,28 @@ const SUB = {
   },
 };
 
+function syncCoach() {
+  if (typeof COACH_PROGRAM === 'undefined') return '';
+  const C = COACH_PROGRAM;
+  if ((S.coachVersion || 0) >= C.version) return '';
+  const first = !S.coachVersion;
+  const prog = { id: C.id, name: C.name, days: JSON.parse(JSON.stringify(C.days)), coach: true };
+  const i = S.programs.findIndex((p) => p.id === C.id);
+  if (i >= 0) S.programs[i] = prog; else S.programs.unshift(prog);
+  (C.log || []).forEach((l) => {
+    const id = `coach-${l.date}-${l.dayId}`;
+    if (S.sessions.some((x) => x.id === id)) return;
+    S.sessions.push({
+      id, date: l.date, startedAt: parseKey(l.date).getTime() + 18 * 3600000, duration: 0, name: l.name, programId: C.id, dayId: l.dayId,
+      exercises: l.exercises.map((e) => ({ exId: e.exId, sets: e.sets.map(([kg, reps]) => ({ kg, reps })) })), prs: [], imported: true,
+    });
+  });
+  if (first) S.activeProgramId = C.id;
+  S.coachVersion = C.version;
+  save();
+  return first ? 'Programme du coach ajouté.' : 'Programme du coach mis à jour.';
+}
+
 function addWeight(date, kg) {
   S.weights = S.weights.filter((w) => w.date !== date);
   S.weights.push({ id: uid(), date, kg: Math.round(kg * 10) / 10 });
@@ -1274,9 +1311,11 @@ async function boot() {
     S.targets = Object.assign(base.targets, saved.targets);
     S.settings = Object.assign(base.settings, saved.settings);
   }
+  const msg = syncCoach();
   applyTheme();
   render();
   if (!S.profile.onboarded) calcSheet(true);
+  else if (msg) toast(msg);
   try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch (e) { /* rien */ }
   try {
     if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost') && document.documentElement.classList.contains('pwa')) {
