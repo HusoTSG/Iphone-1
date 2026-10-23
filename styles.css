@@ -492,3 +492,81 @@ input[type="search"] { background: var(--g-btn); border: 0.5px solid var(--g-edg
 .day-pill.next { border-color: color-mix(in srgb, var(--blue) 55%, var(--g-edge)); box-shadow: inset 0 1px 0 var(--g-top), 0 0 0 1px color-mix(in srgb, var(--blue) 35%, transparent), var(--g-shadow); }
 
 .day-ic.letter { color: #fff; font-family: var(--font-round); font-size: 22px; font-weight: 800; letter-spacing: 0; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.18); }
+
+/* ===== Style inspiré de l'appli Claude =====
+   Fond crème chaud (clair) / gris chaud (sombre), accent corail, titres serif (New York sur iPhone), cartes unies à contour fin. */
+:root {
+  --bg: #f7f5ef; --card: #fffdf9; --fill: rgba(40, 36, 30, 0.06); --fill-2: rgba(40, 36, 30, 0.12);
+  --sep: rgba(40, 36, 30, 0.1); --label: #1f1e1d; --label-2: rgba(31, 30, 29, 0.58); --label-3: rgba(31, 30, 29, 0.3);
+  --blue: #c96442; --green: #4f8a5b; --orange: #c47f2c; --red: #c4453a;
+  --bar: rgba(247, 245, 239, 0.9);
+  --font-display: ui-serif, 'New York', 'Iowan Old Style', Georgia, serif;
+  --ambient: none;
+  --g-surface: var(--card); --g-edge: var(--sep); --g-top: transparent; --g-shadow: 0 1px 2px rgba(40, 36, 30, 0.04);
+  --g-btn: var(--fill); --g-sheet: var(--bg);
+  --glass-bg: rgba(255, 253, 249, 0.72); --glass-solid: rgba(255, 253, 249, 0.94); --glass-edge: rgba(40, 36, 30, 0.1);
+  --glass-hi: rgba(255, 255, 255, 0.8); --glass-sel: rgba(201, 100, 66, 0.12); --glass-shadow: 0 10px 30px rgba(40, 36, 30, 0.12);
+  --day-1: #c96442; --day-2: #5f8f6a; --day-3: #c99a3e; --day-4: #8a6a9e; --day-5: #5b7fa3; --day-6: #a3685b; --day-7: #7a7468;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1f1e1d; --card: #2a2927; --fill: rgba(245, 244, 238, 0.07); --fill-2: rgba(245, 244, 238, 0.13);
+    --sep: rgba(245, 244, 238, 0.1); --label: #f2f0e9; --label-2: rgba(242, 240, 233, 0.6); --label-3: rgba(242, 240, 233, 0.3);
+    --blue: #d97757; --green: #7fb88c; --orange: #e0a458; --red: #e0705f;
+    --bar: rgba(31, 30, 29, 0.9);
+    --ambient: none;
+    --g-surface: var(--card); --g-edge: var(--sep); --g-top: transparent; --g-shadow: none;
+    --g-btn: var(--fill); --g-sheet: var(--bg);
+    --glass-bg: rgba(42, 41, 39, 0.72); --glass-solid: rgba(42, 41, 39, 0.95); --glass-edge: rgba(245, 244, 238, 0.1);
+    --glass-hi: rgba(255, 255, 255, 0.08); --glass-sel: rgba(217, 119, 87, 0.16); --glass-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1f1e1d; --card: #2a2927; --fill: rgba(245, 244, 238, 0.07); --fill-2: rgba(245, 244, 238, 0.13);
+  --sep: rgba(245, 244, 238, 0.1); --label: #f2f0e9; --label-2: rgba(242, 240, 233, 0.6); --label-3: rgba(242, 240, 233, 0.3);
+  --blue: #d97757; --green: #7fb88c; --orange: #e0a458; --red: #e0705f;
+  --bar: rgba(31, 30, 29, 0.9);
+  --ambient: none;
+  --g-surface: var(--card); --g-edge: var(--sep); --g-top: transparent; --g-shadow: none;
+  --g-btn: var(--fill); --g-sheet: var(--bg);
+  --glass-bg: rgba(42, 41, 39, 0.72); --glass-solid: rgba(42, 41, 39, 0.95); --glass-edge: rgba(245, 244, 238, 0.1);
+  --glass-hi: rgba(255, 255, 255, 0.08); --glass-sel: rgba(217, 119, 87, 0.16); --glass-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  color-scheme: dark;
+}
+
+/* Titres serif, plus posés */
+.large h1 { font-family: var(--font-display); font-weight: 500; letter-spacing: -0.3px; font-size: 36px; }
+h2 { font-family: var(--font-display); font-weight: 500; letter-spacing: -0.2px; }
+.sheet-head .title { font-family: var(--font-display); font-weight: 600; font-size: 18px; }
+.exc .hd h3 { font-family: var(--font-display); font-weight: 600; font-size: 19px; }
+.day-pill .t b { font-family: var(--font-display); font-weight: 600 !important; font-size: 19px; }
+.metric .v { font-family: var(--font-display); font-weight: 500; }
+.section-h { letter-spacing: 0.4px; font-size: 12px; font-weight: 600; }
+
+/* Surfaces unies à contour fin (plus de verre ni de flou sur les cartes) */
+.card, .group, .form-group, .exc, .day-pill {
+  background: var(--card); border: 1px solid var(--sep); box-shadow: var(--g-shadow);
+  -webkit-backdrop-filter: none; backdrop-filter: none;
+}
+.day-pill.next { border-color: color-mix(in srgb, var(--blue) 60%, transparent); box-shadow: 0 0 0 1px color-mix(in srgb, var(--blue) 25%, transparent); }
+.btn, .icon-btn, .chip, .segment, input[type="search"] {
+  background: var(--fill); border: 1px solid transparent; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none;
+}
+.icon-btn.plain { background: transparent; }
+.btn.filled { background: var(--blue); color: #fff; border-color: transparent; box-shadow: none; }
+.btn.tinted { background: color-mix(in srgb, var(--blue) 13%, transparent); }
+.btn.red { background: color-mix(in srgb, var(--red) 12%, transparent); }
+.segment button.on { background: var(--card); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12); }
+.chip.on { background: var(--blue); color: #fff; }
+.pill.blue { background: color-mix(in srgb, var(--blue) 14%, transparent); color: var(--blue); }
+.sheet { background-color: var(--bg); background-image: none; -webkit-backdrop-filter: none; backdrop-filter: none; border-top: 1px solid var(--sep); border-radius: 26px 26px 0 0; box-shadow: none; }
+.live { background: var(--bg); }
+.live-head { background: var(--bg); }
+.rest:not(.mini) { background: var(--card); border-top: 1px solid var(--sep); }
+.tick.on { background: var(--green); }
+.sets .done input { background: color-mix(in srgb, var(--green) 14%, transparent); }
+.chart .ar { opacity: 0.1; }
+
+/* Ronds des jours : couleurs douces et unies */
+.day-ic.letter { box-shadow: none; text-shadow: none; font-family: var(--font-display); font-weight: 600; font-size: 22px; }

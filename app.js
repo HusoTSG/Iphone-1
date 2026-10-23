@@ -296,7 +296,7 @@ function dayKind(name) {
   return 'other';
 }
 const DAY_LETTER = ['', 'L', 'M', 'M', 'J', 'V', 'S', 'D'];
-const dayIcon = (d) => { const k = DAY_ICONS[dayKind(d.name)]; const l = d.weekday ? DAY_LETTER[d.weekday] : esc(d.name.trim().charAt(0).toUpperCase()); return `<span class="day-ic letter" style="background:${k.c}">${l}</span>`; };
+const dayIcon = (d) => { const k = DAY_ICONS[dayKind(d.name)]; const l = d.weekday ? DAY_LETTER[d.weekday] : esc(d.name.trim().charAt(0).toUpperCase()); return `<span class="day-ic letter" style="background:var(--day-${d.weekday || 7})">${l}</span>`; };
 const dayLabel = (d) => esc(d.name.replace(/\s·\s/, ' - '));
 
 const views = {};
@@ -729,7 +729,7 @@ function applyTheme() {
   const t = S.settings.theme;
   if (t === 'auto') document.documentElement.removeAttribute('data-theme'); else document.documentElement.setAttribute('data-theme', t);
   const dark = t === 'dark' || (t === 'auto' && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
-  const m = $('meta[name="theme-color"]'); if (m) m.setAttribute('content', dark ? '#000000' : '#f2f2f7');
+  const m = $('meta[name="theme-color"]'); if (m) m.setAttribute('content', dark ? '#1f1e1d' : '#f7f5ef');
 }
 
 // ---------- Actions ----------
