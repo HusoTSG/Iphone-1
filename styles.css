@@ -379,3 +379,5 @@ body.has-mini .toast { bottom: calc(var(--tabbar-h) + var(--tab-bottom) - var(--
 
 /* Chaque page fait au moins la hauteur de l'écran dans l'appli installée (évite la bande vide d'iOS 26) */
 .standalone body { min-height: var(--screen-h, 100vh); }
+/* iOS 26 floute une bande sous la barre d'état : on descend l'en-tête de séance en dessous */
+.live-head { padding-top: calc(env(safe-area-inset-top, 0px) + 26px); }
