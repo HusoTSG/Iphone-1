@@ -649,3 +649,9 @@ h2 { font-family: var(--font-display); font-weight: 700; letter-spacing: 0.2px; 
 .day-cal.today { background: var(--red); border-color: transparent; }
 .day-cal.today .wd, .day-cal.today .dn { color: #fff; }
 .day-pill { padding-left: 10px; }
+
+/* Icône façon appli Forme : rond teinté + symbole coloré */
+.day-fit {
+  width: 48px; height: 48px; border-radius: 50%; flex: none; display: flex; align-items: center; justify-content: center;
+  color: var(--c); background: color-mix(in srgb, var(--c) 16%, transparent);
+}

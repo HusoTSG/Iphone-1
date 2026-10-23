@@ -296,13 +296,18 @@ function dayKind(name) {
   return 'other';
 }
 const DAY_LETTER = ['', 'L', 'M', 'M', 'J', 'V', 'S', 'D'];
-const DAY_SHORT = ['', 'LUN', 'MAR', 'MER', 'JEU', 'VEN', 'SAM', 'DIM'];
-// Mini calendrier façon iPhone : jour en petit, date de cette semaine en gros
+// Icône façon appli Forme d'Apple : symbole du type de séance dans un rond teinté
+const KIND_GLYPH = {
+  upper: { col: 'var(--blue)', svg: '<path d="M6.5 7.5v9M17.5 7.5v9M3.8 10v4M20.2 10v4M6.5 12h11"/>' },
+  lower: { col: 'var(--green)', svg: '<path d="M8.5 3.5h5.5l-1.2 7.2 1.9 6.6v2.2h3.8" stroke-width="2.4"/><path d="M8.5 3.5l1.6 7.4-1.4 9.1" stroke-width="2.4"/>' },
+  push: { col: 'var(--orange)', svg: '<path d="M4 6h16M7 4v4M17 4v4"/><path d="M12 20v-9M8.6 14.4 12 11l3.4 3.4"/>' },
+  pull: { col: '#bf5af2', svg: '<path d="M4 4.5h16"/><path d="M12 8v11M8.6 15.6 12 19l3.4-3.4"/>' },
+  leg: { col: '#30b0c7', svg: '<path d="M8.5 3.5h5.5l-1.2 7.2 1.9 6.6v2.2h3.8" stroke-width="2.4"/><path d="M8.5 3.5l1.6 7.4-1.4 9.1" stroke-width="2.4"/>' },
+  other: { col: 'var(--label-2)', svg: '<path d="M6.5 7.5v9M17.5 7.5v9M3.8 10v4M20.2 10v4M6.5 12h11"/>' },
+};
 const dayIcon = (d) => {
-  if (!d.weekday) return `<span class="day-cal"><span class="wd">JOUR</span><span class="dn">•</span></span>`;
-  const date = parseKey(addDays(dkey(), d.weekday - todayWd())).getDate();
-  const isToday = d.weekday === todayWd();
-  return `<span class="day-cal${isToday ? ' today' : ''}"><span class="wd">${DAY_SHORT[d.weekday]}</span><span class="dn">${date}</span></span>`;
+  const k = KIND_GLYPH[dayKind(d.name)];
+  return `<span class="day-fit" style="--c:${k.col}"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${k.svg}</svg></span>`;
 };
 const dayLabel = (d) => esc(d.name.replace(/\s·\s/, ' - '));
 
