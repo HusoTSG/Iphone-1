@@ -332,7 +332,7 @@ views.train = () => {
   const doneSet = prog ? doneThisWeek(prog) : new Set();
   const days = prog ? prog.days.map((d) => {
     const isNext = nx && !S.live && nx.day.id === d.id, isDone = doneSet.has(d.id);
-    const v = isNext ? `<span class="next-pill">PROCHAIN</span>` : isDone ? `<span class="tag done">✓</span>` : '';
+    const v = isNext ? `<span class="next-pill">PROCHAIN</span>` : isDone ? `<span class="done-dot" aria-label="Fait"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>` : '';
     return cell({ a: 'dayOpen', cls: `day-row${isNext ? ' next' : ''}`, data: `data-d="${d.id}"`, badge: dayIcon(d), t: dayLabel(d), v });
   }).join('') : '';
   return `<header class="large"><div><h1>Entraînement</h1><div class="sub">${cap(fmtDay(k))}</div></div><div class="row" style="gap:10px"><button class="icon-btn" data-a="moreMenu" aria-label="Plus d’options">${ICON.more}</button><button class="icon-btn" data-a="settings" aria-label="Réglages">${ICON.gear}</button></div></header>
