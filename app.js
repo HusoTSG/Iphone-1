@@ -386,7 +386,57 @@ function checkSheet(id = null) {
 function render() {
   $('#main').innerHTML = views[ui.tab]();
   $$('.tabbar button').forEach((b) => b.classList.toggle('on', b.dataset.t === ui.tab));
+  placeTabInd();
   renderLive();
+}
+
+// ---------- Barre d'onglets Liquid Glass : bulle qui suit le doigt ----------
+let tabInd = null, tabDrag = null, tabBlockUntil = 0;
+function initTabbar() {
+  const nav = $('.tabbar nav');
+  tabInd = document.createElement('span'); tabInd.className = 'tab-ind'; tabInd.setAttribute('aria-hidden', 'true');
+  nav.prepend(tabInd);
+  nav.addEventListener('pointerdown', (e) => {
+    const r = nav.getBoundingClientRect();
+    tabDrag = { x0: e.clientX, moved: false, r, w: tabInd.offsetWidth };
+  });
+  nav.addEventListener('pointermove', (e) => {
+    if (!tabDrag) return;
+    if (!tabDrag.moved && Math.abs(e.clientX - tabDrag.x0) < 6) return;
+    if (!tabDrag.moved) { try { nav.setPointerCapture(e.pointerId); } catch (er) { /* rien */ } }
+    tabDrag.moved = true;
+    nav.classList.add('dragging');
+    const { r, w } = tabDrag;
+    const x = clamp(e.clientX - r.left - w / 2, 5, r.width - w - 5);
+    tabInd.classList.add('drag');
+    tabInd.style.transform = `translateX(${x}px) scale(1.12)`;
+    const i = clamp(Math.floor(((e.clientX - r.left) / r.width) * 3), 0, 2);
+    $$('.tabbar button').forEach((b, k) => b.classList.toggle('hover', k === i));
+  });
+  const end = (e) => {
+    if (!tabDrag) return;
+    const d = tabDrag; tabDrag = null;
+    nav.classList.remove('dragging'); tabInd.classList.remove('drag');
+    const hov = $('.tabbar button.hover');
+    $$('.tabbar button').forEach((b) => b.classList.remove('hover'));
+    if (d.moved && e.type === 'pointerup' && hov) {
+      tabBlockUntil = Date.now() + 400;
+      if (hov.dataset.t !== ui.tab) { ui.tab = hov.dataset.t; render(); window.scrollTo(0, 0); return; }
+    }
+    placeTabInd();
+  };
+  nav.addEventListener('pointerup', end);
+  nav.addEventListener('pointercancel', end);
+  nav.addEventListener('click', (e) => { if (Date.now() < tabBlockUntil) { e.stopPropagation(); e.preventDefault(); } }, true);
+  window.addEventListener('resize', () => placeTabInd(false));
+}
+function placeTabInd(animate = true) {
+  if (!tabInd) return;
+  const on = $('.tabbar button.on'); if (!on) return;
+  if (!animate) tabInd.style.transition = 'none';
+  tabInd.style.width = on.offsetWidth + 'px';
+  tabInd.style.transform = `translateX(${on.offsetLeft}px)`;
+  if (!animate) { void tabInd.offsetWidth; tabInd.style.transition = ''; }
 }
 
 // ---------- Séance en cours ----------
@@ -850,7 +900,8 @@ async function boot() {
   if (saved && typeof saved === 'object') S = migrate(saved);
   const msg = syncCoach();
   save();
-  applyTheme(); render();
+  initTabbar();
+  applyTheme(); render(); placeTabInd(false);
   if (msg && saved) toast(msg);
   try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) { /* rien */ }
   try { if ('serviceWorker' in navigator && location.protocol === 'https:' && document.documentElement.classList.contains('pwa')) navigator.serviceWorker.register('sw.js'); } catch (e) { /* rien */ }
