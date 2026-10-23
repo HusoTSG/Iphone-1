@@ -490,3 +490,5 @@ input[type="search"] { background: var(--g-btn); border: 0.5px solid var(--g-edg
 .day-pill:active { transform: scale(0.98); background: var(--g-surface); }
 .day-pill .day-ic { width: 48px; height: 48px; border-radius: 50%; }
 .day-pill.next { border-color: color-mix(in srgb, var(--blue) 55%, var(--g-edge)); box-shadow: inset 0 1px 0 var(--g-top), 0 0 0 1px color-mix(in srgb, var(--blue) 35%, transparent), var(--g-shadow); }
+
+.day-ic.letter { color: #fff; font-family: var(--font-round); font-size: 22px; font-weight: 800; letter-spacing: 0; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.18); }

@@ -295,7 +295,8 @@ function dayKind(name) {
   if (/leg|jambe/.test(n)) return 'leg';
   return 'other';
 }
-const dayIcon = (name) => { const k = DAY_ICONS[dayKind(name)]; return `<span class="day-ic" style="background:${k.c}"><svg viewBox="0 0 24 24" width="24" height="24">${k.svg}</svg></span>`; };
+const DAY_LETTER = ['', 'L', 'M', 'M', 'J', 'V', 'S', 'D'];
+const dayIcon = (d) => { const k = DAY_ICONS[dayKind(d.name)]; const l = d.weekday ? DAY_LETTER[d.weekday] : esc(d.name.trim().charAt(0).toUpperCase()); return `<span class="day-ic letter" style="background:${k.c}">${l}</span>`; };
 const dayLabel = (d) => esc(d.name.replace(/\s·\s/, ' - '));
 
 const views = {};
@@ -307,7 +308,7 @@ views.train = () => {
   const days = prog ? prog.days.map((d) => {
     const isNext = nx && !S.live && nx.day.id === d.id, isDone = doneSet.has(d.id);
     const v = isNext ? `<span class="pill blue">${when(nx)}</span>` : isDone ? `<span class="pill done">✓ Fait</span>` : '';
-    return cell({ a: 'dayOpen', cls: `day-pill${isNext ? ' next' : ''}`, data: `data-d="${d.id}"`, badge: dayIcon(d.name), t: `<b style="font-weight:600">${dayLabel(d)}</b>`, s: `${d.exercises.length} exercices`, v });
+    return cell({ a: 'dayOpen', cls: `day-pill${isNext ? ' next' : ''}`, data: `data-d="${d.id}"`, badge: dayIcon(d), t: `<b style="font-weight:600">${dayLabel(d)}</b>`, s: `${d.exercises.length} exercices`, v });
   }).join('') : '';
   return `<header class="large"><div><h1>Entraînement</h1><div class="sub">${cap(fmtDay(k))}</div></div><button class="icon-btn" data-a="settings" aria-label="Réglages">${ICON.gear}</button></header>
     ${live}
