@@ -710,3 +710,14 @@ body::before {
 /* Pilule PROCHAIN sur l'accueil */
 .next-pill { background: var(--blue); color: #fff; font-size: 11px; font-weight: 700; letter-spacing: 0.6px; padding: 5px 10px; border-radius: 999px; white-space: nowrap; }
 .day-row.next { border: 1.5px solid var(--blue); }
+
+/* Accueil : le programme remplit l'écran */
+#main.v-train { min-height: calc(var(--screen-h, 100dvh) - env(safe-area-inset-top, 0px)); }
+.v-train .prog-sec { flex: 1; display: flex; flex-direction: column; }
+.v-train .day-pills.fill { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+.v-train .day-pills.fill .day-row { flex: 1; min-height: 76px; border-radius: 20px; padding: 14px 18px; }
+/* Libellé façon Apple : jour en petit au-dessus, nom de la séance en gros */
+.day-row .t { display: flex !important; flex-direction: column; gap: 1px; }
+.day-row .dk { font-size: 12px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; color: var(--label-2); }
+.day-row .dn { font-size: 22px; font-weight: 700; letter-spacing: 0.1px; color: var(--label); line-height: 1.15; }
+.day-row .line-ic { width: 36px; }

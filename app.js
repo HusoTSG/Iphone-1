@@ -32,6 +32,7 @@ const ICON = {
   down: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>',
   gear: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
   plates: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 12h20"/><rect x="5" y="5" width="3" height="14" rx="1"/><rect x="16" y="5" width="3" height="14" rx="1"/><rect x="8.5" y="8" width="2" height="8" rx="1"/><rect x="13.5" y="8" width="2" height="8" rx="1"/></svg>',
+  more: '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><circle cx="5.5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="18.5" cy="12" r="1.9"/></svg>',
   clock: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>',
   x: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
   up: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg>',
@@ -316,7 +317,13 @@ const KIND_LINE = { upper: 'dumbbell', lower: 'leg', leg: 'leg', push: 'push', p
 const MUSCLE_LINE = { Pectoraux: 'push', Dos: 'pull', 'Épaules': 'press', Biceps: 'arm', Triceps: 'arm', Quadriceps: 'leg', Ischios: 'leg', Fessiers: 'leg', Mollets: 'leg', Abdos: 'abs', Cardio: 'heart' };
 const dayIcon = (d) => `<span class="line-ic">${lineIcon(KIND_LINE[dayKind(d.name)], 26)}</span>`;
 const exIcon = (ex) => `<span class="ex-ic">${lineIcon(MUSCLE_LINE[ex.muscle] || 'dumbbell', 20)}</span>`;
-const dayLabel = (d) => esc(d.name.replace(/\s·\s/, ' - '));
+const WD_FULL = ['', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
+const dayLabel = (d) => {
+  const parts = d.name.split(/\s·\s/);
+  const top = parts.length > 1 ? parts[0] : (d.weekday ? WD_FULL[d.weekday] : '');
+  const title = parts.length > 1 ? parts.slice(1).join(' · ') : d.name;
+  return `${top ? `<span class="dk">${esc(top)}</span>` : ''}<span class="dn">${esc(title)}</span>`;
+};
 
 const views = {};
 views.train = () => {
@@ -328,14 +335,9 @@ views.train = () => {
     const v = isNext ? `<span class="next-pill">PROCHAIN</span>` : isDone ? `<span class="tag done">✓</span>` : '';
     return cell({ a: 'dayOpen', cls: `day-row${isNext ? ' next' : ''}`, data: `data-d="${d.id}"`, badge: dayIcon(d), t: dayLabel(d), v });
   }).join('') : '';
-  return `<header class="large"><div><h1>Entraînement</h1><div class="sub">${cap(fmtDay(k))}</div></div><button class="icon-btn" data-a="settings" aria-label="Réglages">${ICON.gear}</button></header>
+  return `<header class="large"><div><h1>Entraînement</h1><div class="sub">${cap(fmtDay(k))}</div></div><div class="row" style="gap:10px"><button class="icon-btn" data-a="moreMenu" aria-label="Plus d’options">${ICON.more}</button><button class="icon-btn" data-a="settings" aria-label="Réglages">${ICON.gear}</button></div></header>
     ${live}
-    ${prog ? `<div class="section"><div class="section-h">${esc(prog.name)} · ${doneSet.size}/${prog.days.length} cette semaine</div><div class="day-pills">${days}</div><button class="link" data-a="dayAdd" style="align-self:center">+ Ajouter une journée</button></div>` : '<div class="card"><h2>Aucun programme</h2><p class="muted small" style="margin:0">Crée un programme ou lance une séance libre.</p></div>'}
-    <div class="day-pills">
-      ${cell({ a: 'startFree', cls: 'day-row', badge: `<span class="line-ic">${ICON.play}</span>`, t: 'Séance libre' })}
-      ${cell({ a: 'exLibrary', cls: 'day-row', badge: `<span class="line-ic">${ICON.trophy}</span>`, t: 'Exercices et records' })}
-      ${cell({ a: 'programs', cls: 'day-row', badge: `<span class="line-ic">${ICON.list}</span>`, t: 'Programmes', v: S.programs.length > 1 ? String(S.programs.length) : '' })}
-    </div>`;
+    ${prog ? `<div class="section prog-sec"><div class="section-h">${esc(prog.name)} · ${doneSet.size}/${prog.days.length} cette semaine</div><div class="day-pills fill">${days}</div></div>` : '<div class="card"><h2>Aucun programme</h2><p class="muted small" style="margin:0">Touche ••• en haut pour créer un programme ou lancer une séance libre.</p></div>'}`;
 };
 
 // ---------- Vue Historique ----------
@@ -412,6 +414,7 @@ function checkSheet(id = null) {
 // ---------- Rendu principal ----------
 function render() {
   $('#main').innerHTML = views[ui.tab]();
+  $('#main').className = 'v-' + ui.tab;
   $$('.tabbar button').forEach((b) => b.classList.toggle('on', b.dataset.t === ui.tab));
   placeTabInd();
   renderLive();
@@ -779,6 +782,19 @@ const A = {
   closeSheet() { closeSheet(); },
   confirmOk() { const c = topSheet(); closeSheet(); c.onOk(); },
   settings() { settingsSheet(); },
+  moreMenu() {
+    const row = (a, ic, t) => `<button class="cell day-row" data-a="${a}"><span class="line-ic">${ic}</span><span class="main"><span class="t">${t}</span></span><span class="chev">${ICON.chev}</span></button>`;
+    openSheet({ render: () => `${sheetHead('Plus')}<div class="day-pills">
+      ${row('menuFree', ICON.play, 'Séance libre')}
+      ${row('menuLib', ICON.trophy, 'Exercices et records')}
+      ${row('menuProgs', ICON.list, 'Programmes')}
+      ${activeProgram() ? row('menuDayAdd', lineIcon('plus', 22), 'Ajouter une journée') : ''}
+    </div>` });
+  },
+  menuFree() { closeSheet(); unlockAudio(); startWorkout(null, null); },
+  menuLib() { closeSheet(); exSearchSheet({ title: 'Exercices' }); },
+  menuProgs() { closeSheet(); programsSheet(); },
+  menuDayAdd() { closeSheet(); A.dayAdd(); },
   swipeDel(el) { swipeDelete(el.closest('.swipe')); },
   timerGuide() { timerGuideSheet(); },
   timerTest() { if (!S.settings.iosTimer) { S.settings.iosTimer = true; save(); } runIosTimer(10); },
