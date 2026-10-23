@@ -19,7 +19,8 @@
   --font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', system-ui, sans-serif;
   --font-round: ui-rounded, 'SF Pro Rounded', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   --tabbar-h: 62px;
-  --tab-bottom: max(12px, env(safe-area-inset-bottom, 0px));
+  --vp-gap: 0px; /* trou en bas de l'écran (bug iOS 26 des applis web installées), mesuré en JS */
+  --tab-bottom: max(16px, calc(env(safe-area-inset-bottom, 0px) - 12px));
   --glass-bg: rgba(255, 255, 255, 0.7);
   --glass-solid: rgba(255, 255, 255, 0.9);
   --glass-edge: rgba(255, 255, 255, 0.75);
@@ -171,7 +172,7 @@ input:focus, select:focus { outline: 2px solid var(--blue); outline-offset: -2px
 .tabbar {
   position: fixed; z-index: 20;
   left: max(16px, env(safe-area-inset-left, 0px)); right: max(16px, env(safe-area-inset-right, 0px));
-  bottom: var(--tab-bottom);
+  bottom: calc(var(--tab-bottom) - var(--vp-gap));
   max-width: 440px; margin: 0 auto;
   border-radius: 34px;
   background: var(--glass-bg);
@@ -324,7 +325,7 @@ input:focus, select:focus { outline: 2px solid var(--blue); outline-offset: -2px
 /* Mini-lecteur de séance, visible partout quand la séance est réduite */
 .rest.mini {
   left: max(16px, env(safe-area-inset-left, 0px)); right: max(16px, env(safe-area-inset-right, 0px));
-  bottom: calc(var(--tabbar-h) + var(--tab-bottom) + 8px);
+  bottom: calc(var(--tabbar-h) + var(--tab-bottom) - var(--vp-gap) + 8px);
   padding: 8px 10px 8px 16px; border-radius: 26px; border: 0.5px solid var(--glass-edge); overflow: hidden;
   background: var(--glass-solid); box-shadow: var(--glass-shadow), inset 0 1px 0 var(--glass-hi);
   max-width: 440px; margin: 0 auto;
@@ -354,3 +355,11 @@ body.has-mini .toast { bottom: calc(var(--tabbar-h) + var(--tab-bottom) + 86px);
 .live-head { background: var(--bg); -webkit-backdrop-filter: none; backdrop-filter: none; }
 .rest { -webkit-backdrop-filter: none; backdrop-filter: none; }
 .rest:not(.mini) { background: var(--card); }
+
+/* Compense le trou du bas sur iOS 26 : barres et séance descendent jusqu'au bord réel de l'écran */
+html { background: var(--bg); }
+.rest:not(.mini) { bottom: calc(0px - var(--vp-gap)); }
+.live { bottom: calc(0px - var(--vp-gap)); }
+.sheet-wrap { bottom: calc(0px - var(--vp-gap)); }
+.toast { bottom: calc(var(--tabbar-h) + var(--tab-bottom) - var(--vp-gap) + 16px); }
+body.has-mini .toast { bottom: calc(var(--tabbar-h) + var(--tab-bottom) - var(--vp-gap) + 86px); }

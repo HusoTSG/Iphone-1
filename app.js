@@ -829,7 +829,26 @@ setInterval(() => {
   renderRest();
 }, 500);
 
+// iOS 26 : une appli installée depuis Safari reçoit parfois une fenêtre plus courte que l'écran,
+// ce qui laisse une bande vide en bas. On mesure l'écart pour y redescendre les barres.
+function fixViewportGap() {
+  let gap = 0;
+  try {
+    const standalone = window.navigator.standalone === true || (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
+    if (standalone) {
+      const portrait = window.innerHeight >= window.innerWidth;
+      const full = portrait ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height);
+      gap = Math.round(full - window.innerHeight);
+      if (gap < 0 || gap > 100) gap = 0;
+    }
+  } catch (e) { gap = 0; }
+  document.documentElement.style.setProperty('--vp-gap', gap + 'px');
+}
+window.addEventListener('resize', fixViewportGap);
+window.addEventListener('orientationchange', () => setTimeout(fixViewportGap, 300));
+
 async function boot() {
+  fixViewportGap();
   await Store.open();
   const saved = await Store.get('state');
   if (saved && typeof saved === 'object') S = migrate(saved);
