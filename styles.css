@@ -363,3 +363,6 @@ html { background: var(--bg); }
 .sheet-wrap { bottom: calc(0px - var(--vp-gap)); }
 .toast { bottom: calc(var(--tabbar-h) + var(--tab-bottom) - var(--vp-gap) + 16px); }
 body.has-mini .toast { bottom: calc(var(--tabbar-h) + var(--tab-bottom) - var(--vp-gap) + 86px); }
+
+/* Chaque page fait au moins la hauteur de l'écran dans l'appli installée (évite la bande vide d'iOS 26) */
+.standalone body { min-height: var(--screen-h, 100vh); }
