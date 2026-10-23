@@ -350,3 +350,7 @@ body.has-mini .toast { bottom: calc(var(--tabbar-h) + var(--tab-bottom) + 86px);
 .toast { display: flex; align-items: center; gap: 14px; }
 .toast-undo { border: 0; background: none; color: var(--blue); font-weight: 700; font-size: 15px; padding: 0; }
 .toast { white-space: nowrap; }
+/* En-tête de séance et barre de repos : fond net, sans flou (le flou brouillait le texte sur iPhone) */
+.live-head { background: var(--bg); -webkit-backdrop-filter: none; backdrop-filter: none; }
+.rest { -webkit-backdrop-filter: none; backdrop-filter: none; }
+.rest:not(.mini) { background: var(--card); }
