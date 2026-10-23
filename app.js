@@ -101,10 +101,6 @@ function lastSetsFor(exId) {
   for (const s of sessionsSorted()) { const e = s.exercises.find((x) => x.exId === exId); if (e && e.sets.length) return e.sets; }
   return null;
 }
-function lastFor(exId) {
-  for (const s of sessionsSorted()) { const e = s.exercises.find((x) => x.exId === exId); if (e && e.sets.length) return { date: s.date, sets: e.sets }; }
-  return null;
-}
 function exerciseHistory(exId) {
   return S.sessions.slice().sort((a, b) => a.startedAt - b.startedAt).flatMap((s) => {
     const e = s.exercises.find((x) => x.exId === exId);
@@ -345,21 +341,12 @@ let wl = null;
 async function wakeLock() { try { if ('wakeLock' in navigator && !wl) { wl = await navigator.wakeLock.request('screen'); wl.addEventListener('release', () => { wl = null; }); } } catch (e) { wl = null; } }
 
 function liveExCard(e, i) {
-  const ex = exById(e.exId), last = lastFor(e.exId), prev = last ? last.sets : [];
+  const ex = exById(e.exId), prev = lastSetsFor(e.exId) || [];
   const rows = e.sets.map((s, j) => {
     const p = prev[j];
-    let chip = '<span class="pchip none">—</span>';
-    if (p) {
-      let st = '', arrow = '';
-      if (s.done) {
-        const now = e1rm(num(s.kg) || 0, num(s.reps) || 0), before = e1rm(p.kg, p.reps);
-        if (now > before + 0.01) { st = 'up'; arrow = '<i>↑</i>'; } else if (now < before - 0.01) { st = 'down'; arrow = '<i>↓</i>'; } else { st = 'same'; arrow = '<i>=</i>'; }
-      }
-      chip = `<button class="pchip ${st}" data-a="usePrev" data-e="${i}" data-s="${j}" aria-label="Reprendre ${nf(p.kg, 2)} kg × ${p.reps}">${arrow}<b>${nf(p.kg, 2)}</b><span>×${p.reps}</span></button>`;
-    }
     const phKg = e.kg ? nf(e.kg, 2) : p ? nf(p.kg, 2) : j > 0 ? e.sets[j - 1].kg : '';
     const phR = p ? p.reps : j > 0 ? e.sets[j - 1].reps : '';
-    return `<div class="row-wrap ${s.done ? 'done' : ''}"><div class="n"><span>${j + 1}</span></div>${chip}
+    return `<div class="row-wrap ${s.done ? 'done' : ''}"><div class="n">${j + 1}</div><div class="prev">${p ? `${nf(p.kg, 2)}×${p.reps}` : '—'}</div>
       <input type="text" inputmode="decimal" id="ls-${i}-${j}-kg" value="${esc(s.kg)}" placeholder="${esc(phKg)}" data-in="liveSet" data-e="${i}" data-s="${j}" data-f="kg" aria-label="Charge série ${j + 1}">
       <input type="text" inputmode="numeric" id="ls-${i}-${j}-reps" value="${esc(s.reps)}" placeholder="${esc(phR)}" data-in="liveSet" data-e="${i}" data-s="${j}" data-f="reps" aria-label="Répétitions série ${j + 1}">
       <button class="tick ${s.done ? 'on' : ''}" data-a="liveToggle" data-e="${i}" data-s="${j}" aria-label="Valider la série ${j + 1}">${ICON.check}</button></div>`;
@@ -367,7 +354,7 @@ function liveExCard(e, i) {
   return `<div class="exc"><div class="hd"><div class="grow"><h3>${esc(ex.name)}</h3><div class="meta">${e.target ? esc(e.target) : ''}${e.kg ? ` · <b>${nf(e.kg, 2)} kg</b>` : ''}${e.note ? ` · ${esc(e.note)}` : ''} · repos ${fmtRest(e.rest)}</div></div>
       <button class="icon-btn plain" data-a="platesLive" data-e="${i}" aria-label="Disques à charger">${ICON.plates}</button>
       <button class="icon-btn plain gray" data-a="liveRemoveEx" data-e="${i}" aria-label="Retirer l’exercice">${ICON.x}</button></div>
-    <div class="sets"><div class="h">Série</div><div class="h">${last ? cap(fmtDay(last.date, { day: 'numeric', month: 'short' })) : 'Avant'}</div><div class="h">kg</div><div class="h">Reps</div><div class="h"></div>${rows}</div>
+    <div class="sets"><div class="h">#</div><div class="h">Préc.</div><div class="h">kg</div><div class="h">Reps</div><div class="h"></div>${rows}</div>
     <div class="row"><button class="btn sm" data-a="liveAddSet" data-e="${i}">+ Série</button>${e.sets.length > 1 ? `<button class="btn sm" data-a="liveDelSet" data-e="${i}" style="color:var(--label-2)">− Série</button>` : ''}</div></div>`;
 }
 function renderLive() {
@@ -646,11 +633,6 @@ const A = {
     s.done = true; L.restTotal = e.rest; L.restEnd = Date.now() + e.rest * 1000;
     save(); renderLive();
     if (S.settings.iosTimer) runIosTimer(e.rest);
-  },
-  usePrev(el) {
-    const e = S.live.exercises[+el.dataset.e], j = +el.dataset.s, s = e.sets[j], p = (lastSetsFor(e.exId) || [])[j];
-    if (!p || s.done) return;
-    s.kg = nf(p.kg, 2); s.reps = String(p.reps); save(); renderLive();
   },
   liveAddSet(el) { S.live.exercises[+el.dataset.e].sets.push({ kg: '', reps: '', done: false }); save(); renderLive(); },
   liveDelSet(el) { const e = S.live.exercises[+el.dataset.e]; if (e.sets.length > 1) e.sets.pop(); save(); renderLive(); },
