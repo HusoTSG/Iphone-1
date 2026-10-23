@@ -33,6 +33,7 @@ const ICON = {
   gear: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
   plates: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 12h20"/><rect x="5" y="5" width="3" height="14" rx="1"/><rect x="16" y="5" width="3" height="14" rx="1"/><rect x="8.5" y="8" width="2" height="8" rx="1"/><rect x="13.5" y="8" width="2" height="8" rx="1"/></svg>',
   more: '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><circle cx="5.5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="18.5" cy="12" r="1.9"/></svg>',
+  stopwatch: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13.5" r="7.5"/><path d="M12 13.5V10M10 2.5h4M18.5 6.5l1.2-1.2"/></svg>',
   clock: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>',
   x: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
   up: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg>',
@@ -473,7 +474,7 @@ function placeTabInd(animate = true) {
 function mkLiveEx(exId, tpl) {
   const prev = lastSetsFor(exId);
   const n = (tpl && tpl.sets) || (prev && prev.length) || 3;
-  return { exId, target: tpl ? `${tpl.sets} × ${tpl.reps}` : '', repsT: tpl && /^\d+$/.test(String(tpl.reps).trim()) ? String(tpl.reps).trim() : '', kg: (tpl && tpl.kg) || 0, note: (tpl && tpl.note) || '', rest: (tpl && tpl.rest) || S.settings.rest, sets: Array.from({ length: n }, () => ({ kg: '', reps: '', done: false })) };
+  return { exId, target: tpl ? `${tpl.sets} × ${tpl.reps}` : '', repsT: tpl && /^\d+$/.test(String(tpl.reps).trim()) ? String(tpl.reps).trim() : '', kg: (tpl && tpl.kg) || 0, note: (tpl && tpl.note) || '', rest: (tpl && tpl.rest) || S.settings.rest, hold: (tpl && tpl.hold) || 0, sides: (tpl && tpl.sides) || 1, sets: Array.from({ length: n }, () => ({ kg: '', reps: '', done: false })) };
 }
 function startWorkout(progId, dayId) {
   if (S.live) { ui.liveOpen = true; render(); toast('Une séance est déjà en cours'); return; }
@@ -508,6 +509,7 @@ function liveExCard(e, i) {
       <button class="icon-btn plain" data-a="exHist" data-e="${i}" aria-label="Historique et options">${ICON.clock}</button>
       ${allDone ? `<button class="icon-btn plain" data-a="liveCollapse" data-e="${i}" aria-label="Réduire">${ICON.up}</button>` : ''}</div>
     <div class="sets"><div class="h">Reps</div><div class="h">kg</div><div class="h"></div>${rows}</div>
+    ${holdOf(e) && !allDone ? `<button class="btn hold-btn" data-a="holdStart" data-e="${i}">${ICON.stopwatch}Chrono ${holdOf(e).hold} s${holdOf(e).sides > 1 ? ' de chaque côté' : ''}</button>` : ''}
     <button class="link small" data-a="liveAddSet" data-e="${i}" style="align-self:flex-start;padding:0">+ Ajouter une série</button></div>`;
 }
 
@@ -582,6 +584,75 @@ function beep() {
   } catch (e) { /* son indisponible */ }
   try { if (navigator.vibrate) navigator.vibrate([200, 100, 200]); } catch (e) { /* rien */ }
 }
+// ---------- Chrono de gainage (ex. planche latérale : 30 s, change de côté, 30 s) ----------
+function holdOf(e) {
+  let h = e.hold, sides = e.sides;
+  if (!h && S.live && S.live.dayId) { // séance lancée avant l'ajout du chrono
+    const prog = S.programs.find((p) => p.id === S.live.programId), dy = prog && prog.days.find((x) => x.id === S.live.dayId);
+    const t = dy && dy.exercises.find((x) => x.exId === e.exId && x.hold);
+    if (t) { h = t.hold; sides = t.sides; }
+  }
+  return h ? { hold: h, sides: sides || 1 } : null;
+}
+const SWITCH_SEC = 3;
+let hold = null, holdTick = null;
+function speak(txt) {
+  try { const u = new SpeechSynthesisUtterance(txt); u.lang = 'fr-FR'; u.rate = 1.05; speechSynthesis.cancel(); speechSynthesis.speak(u); } catch (e) { /* rien */ }
+}
+function holdStart(i) {
+  const e = S.live.exercises[i], h = holdOf(e); if (!h) return;
+  const j = e.sets.findIndex((s) => !s.done); if (j < 0) return;
+  unlockAudio();
+  if (S.live.restEnd) { S.live.restEnd = null; save(); renderRest(); }
+  hold = { i, j, side: 1, sides: h.sides, dur: h.hold, phase: 'run', end: Date.now() + h.hold * 1000, left: 0 };
+  wakeLock();
+  let ov = $('#hold');
+  if (!ov) { ov = document.createElement('div'); ov.id = 'hold'; document.body.appendChild(ov); }
+  const ex = exById(e.exId);
+  ov.innerHTML = `<div class="hold-card" role="dialog" aria-modal="true" aria-label="Chrono">
+    <div class="hold-ex">${esc(ex.name)} · série ${j + 1}</div>
+    <div class="hold-ring"><svg viewBox="0 0 200 200"><circle class="bg" cx="100" cy="100" r="88"/><circle class="fg" cx="100" cy="100" r="88" pathLength="1000"/></svg>
+      <div class="hold-mid"><div class="hold-num" aria-live="off"></div><div class="hold-side"></div></div></div>
+    <div class="hold-msg" aria-live="assertive"></div>
+    <div class="hold-btns"><button class="btn" data-a="holdStop">Arrêter</button><button class="btn filled" data-a="holdPause">Pause</button></div></div>`;
+  ov.hidden = false;
+  requestAnimationFrame(() => ov.classList.add('on'));
+  clearInterval(holdTick); holdTick = setInterval(holdUpdate, 100); holdUpdate();
+}
+function holdUpdate() {
+  if (!hold) return;
+  const ov = $('#hold'); if (!ov) return;
+  const now = Date.now();
+  if (hold.phase !== 'pause' && now >= hold.end) {
+    if (hold.phase === 'run' && hold.side < hold.sides) {
+      hold.phase = 'switch'; hold.end = now + SWITCH_SEC * 1000; beep(); speak('Change de côté');
+    } else if (hold.phase === 'switch') {
+      hold.side += 1; hold.phase = 'run'; hold.end = now + hold.dur * 1000; speak('Go');
+    } else { holdFinish(); return; }
+  }
+  const total = hold.phase === 'switch' ? SWITCH_SEC : hold.dur;
+  const left = hold.phase === 'pause' ? hold.left : Math.max(0, (hold.end - now) / 1000);
+  ov.dataset.phase = hold.phase === 'pause' ? hold.paused : hold.phase;
+  $('.hold-num', ov).textContent = Math.ceil(left - 0.001) || 0;
+  $('.hold-side', ov).textContent = hold.sides > 1 ? `Côté ${hold.side} sur ${hold.sides}` : '';
+  $('.hold-msg', ov).textContent = hold.phase === 'switch' || hold.paused === 'switch' && hold.phase === 'pause' ? 'Change de côté' : hold.phase === 'pause' ? 'En pause' : '';
+  $('.hold-ring .fg', ov).style.strokeDashoffset = String(1000 * (1 - left / total));
+  $('[data-a="holdPause"]', ov).textContent = hold.phase === 'pause' ? 'Reprendre' : 'Pause';
+}
+function holdClose() {
+  clearInterval(holdTick); holdTick = null; hold = null;
+  const ov = $('#hold'); if (ov) { ov.classList.remove('on'); setTimeout(() => { if (!hold) ov.hidden = true; }, 250); }
+}
+function holdFinish() {
+  const { i, j } = hold;
+  beep(); speak('Terminé');
+  holdClose();
+  const e = S.live && S.live.exercises[i]; if (!e || !e.sets[j] || e.sets[j].done) return;
+  if (e.sets[j].reps === '') e.sets[j].reps = String(holdOf(e).hold);
+  A.liveToggle({ dataset: { e: String(i), s: String(j) } });
+  toast(`Série ${j + 1} validée`);
+}
+
 function finishWorkout() {
   const L = S.live;
   const exercises = L.exercises.map((e) => ({ exId: e.exId, sets: e.sets.filter((s) => s.done).map((s) => ({ kg: num(s.kg) || 0, reps: Math.round(num(s.reps)) || 0 })) })).filter((e) => e.sets.length);
@@ -877,6 +948,14 @@ const A = {
     if (e.sets.every((x) => x.done)) e.collapsed = true;
     save(); renderLive();
     if (S.settings.iosTimer) runIosTimer(e.rest);
+  },
+  holdStart(el) { holdStart(+el.dataset.e); },
+  holdStop() { holdClose(); },
+  holdPause() {
+    if (!hold) return;
+    if (hold.phase === 'pause') { hold.phase = hold.paused; hold.end = Date.now() + hold.left * 1000; }
+    else { hold.left = Math.max(0, (hold.end - Date.now()) / 1000); hold.paused = hold.phase; hold.phase = 'pause'; }
+    holdUpdate();
   },
   liveExpand(el) { S.live.exercises[+el.dataset.e].collapsed = false; save(); renderLive(); },
   liveCollapse(el) { S.live.exercises[+el.dataset.e].collapsed = true; save(); renderLive(); },

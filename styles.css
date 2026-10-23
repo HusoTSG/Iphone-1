@@ -739,3 +739,32 @@ header.large.train-h .icon-btn { color: var(--label); }
 .wp-bar i { flex: 1; height: 6px; border-radius: 3px; background: var(--fill, rgba(127,127,127,0.22)); }
 .wp-bar i.on { background: var(--green); }
 .wp-bar i.nx { background: var(--blue); opacity: 0.45; }
+
+/* Bouton chrono dans l'exercice */
+.btn.hold-btn { align-self: stretch; gap: 8px; min-height: 46px; color: var(--blue); font-weight: 600; }
+
+/* Chrono plein écran : appli floutée derrière, façon Liquid Glass */
+#hold { position: fixed; inset: 0; z-index: 90; display: flex; align-items: center; justify-content: center; padding: 24px;
+  background: rgba(0,0,0,0.28); -webkit-backdrop-filter: blur(26px) saturate(170%); backdrop-filter: blur(26px) saturate(170%);
+  opacity: 0; transition: opacity .25s ease; }
+#hold.on { opacity: 1; }
+#hold[hidden] { display: none; }
+.hold-card { width: 100%; max-width: 360px; display: flex; flex-direction: column; align-items: center; gap: 22px; padding: 28px 22px 22px; border-radius: 36px;
+  background: var(--glass-bg); border: 1px solid var(--glass-edge); box-shadow: inset 0 1px 0 var(--glass-hi), 0 20px 60px rgba(0,0,0,0.35);
+  -webkit-backdrop-filter: blur(30px) saturate(180%); backdrop-filter: blur(30px) saturate(180%);
+  transform: scale(.94); transition: transform .3s cubic-bezier(.2,.9,.3,1.2); }
+#hold.on .hold-card { transform: scale(1); }
+.hold-ex { font-size: 15px; font-weight: 600; color: var(--label-2); text-align: center; }
+.hold-ring { position: relative; width: 240px; height: 240px; }
+.hold-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.hold-ring circle { fill: none; stroke-width: 12; stroke-linecap: round; }
+.hold-ring .bg { stroke: rgba(127,127,127,0.2); }
+.hold-ring .fg { stroke: var(--blue); stroke-dasharray: 1000; transition: stroke-dashoffset .1s linear, stroke .3s; }
+#hold[data-phase="switch"] .hold-ring .fg { stroke: var(--orange, #ff9f0a); }
+.hold-mid { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.hold-num { font-size: 92px; font-weight: 700; line-height: 1; letter-spacing: -2px; font-variant-numeric: tabular-nums; color: var(--label); }
+.hold-side { margin-top: 6px; font-size: 15px; font-weight: 600; color: var(--label-2); }
+.hold-msg { min-height: 30px; font-size: 26px; font-weight: 700; color: var(--orange, #ff9f0a); text-align: center; }
+#hold[data-phase="run"] .hold-msg { color: var(--label-2); }
+.hold-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; }
+.hold-btns .btn { min-height: 52px; font-size: 17px; }

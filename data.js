@@ -88,7 +88,7 @@ const EXERCISES = [
 const COACH_PROGRAM = {
   id: 'coach',
   name: 'Programme coach',
-  version: 8,
+  version: 9,
   days: [
     { id: 'mon-upper', name: 'Lundi · Upper', weekday: 1, exercises: [
       { exId: 'lat-pulldown', sets: 3, reps: '8-12', kg: 36.5, rest: 120, note: '1-2 RIR' },
@@ -124,7 +124,7 @@ const COACH_PROGRAM = {
       { exId: 'reverse-fly-machine', sets: 3, reps: '10-15', kg: 35.2, rest: 90, note: '' },
       { exId: 'cable-curl', sets: 3, reps: '10-15', kg: 28.5, rest: 90, note: '' },
       { exId: 'crunch-db', sets: 3, reps: '12', kg: 12, rest: 60, note: 'Abdos' },
-      { exId: 'side-plank', sets: 3, reps: '30', kg: 0, rest: 60, note: 'Abdos · 30 s de chaque côté' },
+      { exId: 'side-plank', sets: 3, reps: '30', kg: 0, rest: 60, hold: 30, sides: 2, note: 'Abdos · 30 s de chaque côté' },
       { exId: 'back-ext-rounded', sets: 3, reps: '8-12', kg: 20, rest: 60, note: 'Abdos' },
     ] },
     { id: 'sat-leg', name: 'Samedi · Leg', weekday: 6, exercises: [
