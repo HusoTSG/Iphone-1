@@ -307,11 +307,11 @@ views.train = () => {
   const days = prog ? prog.days.map((d) => {
     const isNext = nx && !S.live && nx.day.id === d.id, isDone = doneSet.has(d.id);
     const v = isNext ? `<span class="pill blue">${when(nx)}</span>` : isDone ? `<span class="pill done">✓ Fait</span>` : '';
-    return cell({ a: 'dayOpen', data: `data-d="${d.id}"`, badge: dayIcon(d.name), t: `<b style="font-weight:600">${dayLabel(d)}</b>`, s: `${d.exercises.length} exercices`, v });
+    return cell({ a: 'dayOpen', cls: `day-pill${isNext ? ' next' : ''}`, data: `data-d="${d.id}"`, badge: dayIcon(d.name), t: `<b style="font-weight:600">${dayLabel(d)}</b>`, s: `${d.exercises.length} exercices`, v });
   }).join('') : '';
   return `<header class="large"><div><h1>Entraînement</h1><div class="sub">${cap(fmtDay(k))}</div></div><button class="icon-btn" data-a="settings" aria-label="Réglages">${ICON.gear}</button></header>
     ${live}
-    ${prog ? `<div class="section"><div class="section-h">${esc(prog.name)} · ${doneSet.size}/${prog.days.length} cette semaine</div><div class="group">${days}<button class="cell center" data-a="dayAdd">Ajouter une journée</button></div></div>` : '<div class="card"><h2>Aucun programme</h2><p class="muted small" style="margin:0">Crée un programme ou lance une séance libre.</p></div>'}
+    ${prog ? `<div class="section"><div class="section-h">${esc(prog.name)} · ${doneSet.size}/${prog.days.length} cette semaine</div><div class="day-pills">${days}</div><button class="link" data-a="dayAdd" style="align-self:center">+ Ajouter une journée</button></div>` : '<div class="card"><h2>Aucun programme</h2><p class="muted small" style="margin:0">Crée un programme ou lance une séance libre.</p></div>'}
     <div class="section"><div class="group">
       ${cell({ a: 'startFree', badge: `<span class="badge green">${ICON.play}</span>`, t: 'Séance libre' })}
       ${cell({ a: 'exLibrary', badge: `<span class="badge orange">${ICON.trophy}</span>`, t: 'Exercices et records' })}

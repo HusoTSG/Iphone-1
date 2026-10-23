@@ -476,3 +476,17 @@ input[type="search"] { background: var(--g-btn); border: 0.5px solid var(--g-edg
 .live-head { background: color-mix(in srgb, var(--bg) 88%, transparent); }
 .rest:not(.mini) { background: var(--g-sheet); border-top: 0.5px solid var(--g-edge); }
 .toast { background: var(--glass-solid); border: 0.5px solid var(--glass-edge); }
+
+/* Jours du programme en pilules séparées */
+.day-pills { display: flex; flex-direction: column; gap: 10px; }
+.day-pills .cell::before { display: none; }
+.day-pill {
+  border-radius: 999px; padding: 9px 18px 9px 9px; min-height: 66px;
+  background: var(--g-surface); border: 0.5px solid var(--g-edge);
+  -webkit-backdrop-filter: var(--g-blur); backdrop-filter: var(--g-blur);
+  box-shadow: inset 0 1px 0 var(--g-top), var(--g-shadow);
+  transition: transform 0.15s ease;
+}
+.day-pill:active { transform: scale(0.98); background: var(--g-surface); }
+.day-pill .day-ic { width: 48px; height: 48px; border-radius: 50%; }
+.day-pill.next { border-color: color-mix(in srgb, var(--blue) 55%, var(--g-edge)); box-shadow: inset 0 1px 0 var(--g-top), 0 0 0 1px color-mix(in srgb, var(--blue) 35%, transparent), var(--g-shadow); }
