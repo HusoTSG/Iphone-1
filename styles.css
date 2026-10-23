@@ -702,3 +702,4 @@ body::before {
   content: ''; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px);
   background: var(--bg); z-index: 35; pointer-events: none;
 }
+.btn.pill-red { color: var(--red); }

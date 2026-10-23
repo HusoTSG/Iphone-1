@@ -532,10 +532,8 @@ function renderLive() {
       <div class="mid"><div class="n">${esc(L.name)}</div><div class="clock" id="clock">${fmtClock((Date.now() - L.startedAt) / 1000)}</div></div>
       <div style="justify-self:end"><button class="btn filled sm" data-a="liveFinish">Terminer</button></div></div></div>
     <div class="live-body">${L.exercises.map(liveExCard).join('') || '<div class="exc"><div class="empty">Ajoute ton premier exercice.</div></div>'}
-      <div class="day-pills">
-        <button class="cell day-row act" data-a="liveAddEx"><span class="line-ic">${lineIcon('plus', 24)}</span><span class="main"><span class="t">Ajouter un exercice</span></span></button>
-        <button class="cell day-row act red" data-a="liveCancel"><span class="line-ic">${lineIcon('xmark', 24)}</span><span class="main"><span class="t">Abandonner la séance</span></span></button>
-      </div></div></div>`;
+      <button class="btn filled block" data-a="liveAddEx">Ajouter un exercice</button>
+      <button class="btn block pill-red" data-a="liveCancel">Abandonner la séance</button></div></div>`;
   root.querySelector('.live').scrollTop = sc;
   renderRest();
 }
