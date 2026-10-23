@@ -323,3 +323,17 @@ input:focus, select:focus { outline: 2px solid var(--blue); outline-offset: -2px
 .mini-open .mn { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 body.has-mini #main { padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 110px); }
 body.has-mini .toast { bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 86px); }
+
+/* Glisser pour supprimer */
+.swipe { position: relative; overflow: hidden; transition: max-height 0.22s ease; }
+.swipe + .swipe > .cell::before { content: ''; position: absolute; top: 0; left: 16px; right: 0; height: 0.5px; background: var(--sep); }
+.swipe-fg { background: var(--card); touch-action: pan-y; position: relative; z-index: 1; transition: transform 0.28s cubic-bezier(0.2, 0.9, 0.3, 1); }
+.swipe-act {
+  position: absolute; inset: 0; border: 0; background: var(--red); color: #fff; padding: 0;
+  display: flex; align-items: center; justify-content: flex-end; font-size: 13px; font-weight: 600;
+}
+.swipe-act .in { width: 88px; display: flex; flex-direction: column; align-items: center; gap: 3px; transition: width 0.2s ease; }
+.swipe.full .swipe-act .in { width: 100%; align-items: flex-end; padding-right: 24px; }
+.toast { display: flex; align-items: center; gap: 14px; }
+.toast-undo { border: 0; background: none; color: var(--blue); font-weight: 700; font-size: 15px; padding: 0; }
+.toast { white-space: nowrap; }

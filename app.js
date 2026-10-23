@@ -155,12 +155,76 @@ function syncCoach() {
 }
 
 // ---------- Petits composants ----------
-function toast(msg) {
+function toast(msg, undo = null) {
   $$('.toast').forEach((t) => t.remove());
   const t = document.createElement('div');
   t.className = 'toast'; t.setAttribute('role', 'status'); t.textContent = msg;
-  document.body.appendChild(t); setTimeout(() => t.remove(), 2200);
+  if (undo) {
+    const b = document.createElement('button'); b.className = 'toast-undo'; b.textContent = 'Annuler';
+    b.addEventListener('click', (e) => { e.stopPropagation(); t.remove(); undo(); });
+    t.appendChild(b);
+  }
+  document.body.appendChild(t); setTimeout(() => t.remove(), undo ? 4500 : 2200);
 }
+
+// ---------- Glisser vers la gauche pour supprimer (comme sur iPhone) ----------
+const SWIPE_W = 88;
+const TRASH = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg>';
+const swipeRow = (kind, id, cellHtml) => `<div class="swipe" data-kind="${kind}" data-id="${id}"><button class="swipe-act" data-a="swipeDel" aria-label="Supprimer"><span class="in">${TRASH}<span>Supprimer</span></span></button>${cellHtml}</div>`;
+let sw = null, blockClickUntil = 0;
+function closeSwipes(except) {
+  $$('.swipe.open').forEach((x) => { if (x !== except) { x.classList.remove('open'); x.querySelector('.swipe-fg').style.transform = ''; } });
+}
+function swipeDelete(row) {
+  const kind = row.dataset.kind, id = row.dataset.id;
+  row.style.maxHeight = row.offsetHeight + 'px';
+  row.classList.add('removing');
+  requestAnimationFrame(() => { row.style.maxHeight = '0px'; });
+  setTimeout(() => {
+    if (kind === 'session') {
+      const i = S.sessions.findIndex((x) => x.id === id); if (i < 0) return;
+      const [item] = S.sessions.splice(i, 1); save(); render();
+      toast('Séance supprimée', () => { S.sessions.push(item); save(); render(); });
+    } else if (kind === 'check') {
+      const i = S.checks.findIndex((x) => x.id === id); if (i < 0) return;
+      const [item] = S.checks.splice(i, 1); save(); render();
+      toast('Mesure supprimée', () => { S.checks.push(item); save(); render(); });
+    }
+  }, 220);
+}
+document.addEventListener('pointerdown', (e) => {
+  const fg = e.target.closest('.swipe-fg');
+  if (!fg) { if (!e.target.closest('.swipe-act')) closeSwipes(); return; }
+  const row = fg.parentElement;
+  sw = { row, fg, x0: e.clientX, y0: e.clientY, base: row.classList.contains('open') ? -SWIPE_W : 0, x: 0, moving: false, w: row.offsetWidth };
+});
+document.addEventListener('pointermove', (e) => {
+  if (!sw) return;
+  const dx = e.clientX - sw.x0, dy = e.clientY - sw.y0;
+  if (!sw.moving) {
+    if (Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy)) { sw.moving = true; closeSwipes(sw.row); sw.fg.style.transition = 'none'; }
+    else if (Math.abs(dy) > 8) { sw = null; return; } else return;
+  }
+  sw.x = Math.min(0, sw.base + dx);
+  sw.fg.style.transform = `translateX(${sw.x}px)`;
+  sw.row.classList.toggle('full', sw.x < -sw.w * 0.55);
+});
+document.addEventListener('pointerup', () => {
+  if (!sw) return;
+  const s0 = sw; sw = null;
+  if (!s0.moving) { if (s0.row.classList.contains('open')) { blockClickUntil = Date.now() + 400; closeSwipes(); } return; }
+  blockClickUntil = Date.now() + 400;
+  s0.fg.style.transition = '';
+  if (s0.x < -s0.w * 0.55) { s0.fg.style.transform = 'translateX(-100%)'; swipeDelete(s0.row); return; }
+  s0.row.classList.remove('full');
+  if (s0.x < -40) { s0.row.classList.add('open'); s0.fg.style.transform = `translateX(-${SWIPE_W}px)`; }
+  else { s0.row.classList.remove('open'); s0.fg.style.transform = ''; }
+});
+document.addEventListener('pointercancel', () => {
+  if (sw && sw.moving) { sw.fg.style.transition = ''; sw.fg.style.transform = sw.row.classList.contains('open') ? `translateX(-${SWIPE_W}px)` : ''; sw.row.classList.remove('full'); }
+  sw = null;
+});
+document.addEventListener('click', (e) => { if (Date.now() < blockClickUntil && e.target.closest('.swipe-fg')) { e.stopPropagation(); e.preventDefault(); } }, true);
 
 function niceStep(range, n) { const raw = range / n, mag = Math.pow(10, Math.floor(Math.log10(raw))); const r = raw / mag; return (r <= 1 ? 1 : r <= 2 ? 2 : r <= 2.5 ? 2.5 : r <= 5 ? 5 : 10) * mag; }
 function lineChart(pts, unit = '') {
@@ -256,9 +320,10 @@ views.history = () => {
   ss.forEach((s) => {
     const m = cap(parseKey(s.date).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }));
     if (m !== cur) { if (cur) list += '</div></div>'; cur = m; list += `<div class="section"><div class="section-h">${m}</div><div class="group">`; }
-    list += cell({ a: 'sessionOpen', data: `data-id="${s.id}"`, t: esc(s.name), s: `${fmtShort(s.date)}${s.duration ? ' · ' + fmtDur(s.duration) : ''} · ${sessionSets(s)} séries`, v: s.prs && s.prs.length ? `<span class="pill pr">${s.prs.length} record${s.prs.length > 1 ? 's' : ''}</span>` : '' });
+    list += swipeRow('session', s.id, cell({ a: 'sessionOpen', cls: 'swipe-fg', data: `data-id="${s.id}"`, t: esc(s.name), s: `${fmtShort(s.date)}${s.duration ? ' · ' + fmtDur(s.duration) : ''} · ${sessionSets(s)} séries`, v: s.prs && s.prs.length ? `<span class="pill pr">${s.prs.length} record${s.prs.length > 1 ? 's' : ''}</span>` : '' }));
   });
   if (cur) list += '</div></div>';
+  if (ss.length) list += '<div class="section-f">Glisse une séance vers la gauche pour la supprimer.</div>';
   return `<header class="large"><div><h1>Historique</h1></div></header>
     <div class="card"><div class="grid2"><div class="metric"><span class="k">Séances ce mois-ci</span><span class="v">${ms.length}</span></div><div class="metric"><span class="k">Volume ce mois-ci</span><span class="v">${nf(ms.reduce((a, s) => a + sessionVolume(s), 0) / 1000, 1)}<small>t</small></span></div></div></div>
     ${list || '<div class="card"><div class="empty">Tes séances terminées apparaîtront ici.</div></div>'}`;
@@ -282,7 +347,7 @@ views.track = () => {
   const chart = lineChart(sel.map((c) => ({ x: parseKey(c.date).getTime(), y: c[ui.chart] })), ui.chart === 'kg' ? 'kg' : 'cm');
   const rows = cs.slice().reverse().map((c) => {
     const parts = [Number.isFinite(c.kg) ? `${nf1(c.kg)} kg` : '', Number.isFinite(c.waist) ? `${nf1(c.waist)} cm` : ''].filter(Boolean).join(' · ');
-    return cell({ a: 'checkEdit', data: `data-id="${c.id}"`, t: fmtShort(c.date), s: `Semaine ${isoWeek(c.date)}`, v: parts });
+    return swipeRow('check', c.id, cell({ a: 'checkEdit', cls: 'swipe-fg', data: `data-id="${c.id}"`, t: fmtShort(c.date), s: `Semaine ${isoWeek(c.date)}`, v: parts }));
   }).join('');
   const tip = '<div class="section-f">Pour comparer d’une semaine à l’autre, mesure-toi le même jour, le matin à jeun, ruban au niveau du nombril.</div>';
   return `<header class="large"><div><h1>Suivi</h1><div class="sub">Poids et tour de taille, chaque semaine</div></div></header>
@@ -614,6 +679,7 @@ const A = {
   closeSheet() { closeSheet(); },
   confirmOk() { const c = topSheet(); closeSheet(); c.onOk(); },
   settings() { settingsSheet(); },
+  swipeDel(el) { swipeDelete(el.closest('.swipe')); },
   timerGuide() { timerGuideSheet(); },
   timerTest() { runIosTimer(10); },
 
