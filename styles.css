@@ -625,3 +625,13 @@ h2 { font-family: var(--font-display); font-weight: 500; letter-spacing: -0.2px;
 .day-pill.next { border-color: color-mix(in srgb, var(--blue) 60%, transparent); box-shadow: 0 0 0 1px color-mix(in srgb, var(--blue) 25%, transparent); }
 .sheet { background-color: var(--bg); }
 .toast { background: var(--glass-solid); }
+
+/* Police Apple partout (SF Pro), y compris les titres */
+:root { --font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', system-ui, sans-serif; }
+.large h1 { font-family: var(--font-display); font-weight: 700; letter-spacing: 0.2px; font-size: 34px; }
+h2 { font-family: var(--font-display); font-weight: 700; letter-spacing: 0.2px; }
+.sheet-head .title { font-family: var(--font); font-weight: 600; font-size: 17px; }
+.exc .hd h3 { font-family: var(--font); font-weight: 600; font-size: 17px; }
+.day-pill .t b { font-family: var(--font); font-weight: 600 !important; font-size: 17px; }
+.metric .v { font-family: var(--font-round); font-weight: 700; }
+.day-ic.letter { font-family: var(--font-round); font-weight: 700; font-size: 21px; }
