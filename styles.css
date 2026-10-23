@@ -308,3 +308,18 @@ input:focus, select:focus { outline: 2px solid var(--blue); outline-offset: -2px
 .sheet > * { flex-shrink: 0; }
 .form-group .fr input.switch { flex: none; width: 51px; height: 31px; min-height: 31px; padding: 0; border-radius: 16px; background: var(--fill-2); text-align: left; }
 .form-group .fr input.switch:checked { background: var(--green); }
+
+/* Mini-lecteur de séance, visible partout quand la séance est réduite */
+.rest.mini {
+  left: max(8px, env(safe-area-inset-left, 0px)); right: max(8px, env(safe-area-inset-right, 0px));
+  bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 8px);
+  padding: 8px 10px 8px 14px; border-radius: 16px; border: 0.5px solid var(--sep); overflow: hidden;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
+}
+.rest.mini .t { font-size: 24px; min-width: 0; line-height: 1.1; }
+.rest.mini .clock { font-size: 17px; color: var(--label); }
+.mini-open { border: 0; background: none; padding: 0; color: inherit; text-align: left; display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.mini-open .foot { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mini-open .mn { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+body.has-mini #main { padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 110px); }
+body.has-mini .toast { bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 86px); }

@@ -372,14 +372,30 @@ function renderLive() {
   root.querySelector('.live').scrollTop = sc;
   renderRest();
 }
+// Barre du bas : chrono de repos pendant la séance, et mini-lecteur partout dans l'appli quand la séance est réduite
 function renderRest() {
   const el = $('#rest'), L = S.live;
-  if (!L || !L.restEnd || !ui.liveOpen) { el.hidden = true; el.innerHTML = ''; return; }
-  const left = Math.max(0, (L.restEnd - Date.now()) / 1000);
-  if (!el.firstChild) el.innerHTML = '<div class="prog"></div><div class="in"><div class="grow"><div class="foot">Repos</div><div class="t" id="restT"></div></div><button class="btn sm" data-a="restAdd" data-v="-15">−15</button><button class="btn sm" data-a="restAdd" data-v="15">+15</button><button class="btn sm filled" data-a="restSkip">Passer</button></div>';
+  const mini = !!L && !ui.liveOpen;
+  if (!L || (!L.restEnd && !mini)) { el.hidden = true; el.innerHTML = ''; el.dataset.mode = ''; document.body.classList.remove('has-mini'); return; }
+  const resting = !!L.restEnd;
+  const mode = `${mini ? 'mini' : 'full'}-${resting ? 'rest' : 'run'}`;
+  if (el.dataset.mode !== mode) {
+    el.dataset.mode = mode;
+    el.className = mini ? 'rest mini' : 'rest';
+    const ctrls = '<button class="btn sm" data-a="restAdd" data-v="-15">−15</button><button class="btn sm" data-a="restAdd" data-v="15">+15</button><button class="btn sm filled" data-a="restSkip">Passer</button>';
+    if (!mini) el.innerHTML = `<div class="prog"></div><div class="in"><div class="grow"><div class="foot">Repos</div><div class="t" id="restT"></div></div>${ctrls}</div>`;
+    else if (resting) el.innerHTML = `<div class="prog"></div><div class="in"><button class="mini-open" data-a="liveOpen" aria-label="Rouvrir la séance"><span class="foot">Repos · ${esc(L.name)}</span><span class="t" id="restT"></span></button>${ctrls}</div>`;
+    else el.innerHTML = `<div class="in"><button class="mini-open" data-a="liveOpen" aria-label="Rouvrir la séance"><span class="foot">Séance en cours</span><span class="mn">${esc(L.name)}</span></button><span class="clock" id="miniClock"></span><button class="btn sm filled" data-a="liveOpen">Ouvrir</button></div>`;
+  }
   el.hidden = false;
-  $('#restT').textContent = fmtClock(Math.ceil(left));
-  el.querySelector('.prog').style.width = `${clamp((left / (L.restTotal || 1)) * 100, 0, 100)}%`;
+  document.body.classList.toggle('has-mini', mini);
+  if (resting) {
+    const left = Math.max(0, (L.restEnd - Date.now()) / 1000);
+    const t = $('#restT'); if (t) t.textContent = fmtClock(Math.ceil(left));
+    const pr = el.querySelector('.prog'); if (pr) pr.style.width = `${clamp((left / (L.restTotal || 1)) * 100, 0, 100)}%`;
+  } else {
+    const c = $('#miniClock'); if (c) c.textContent = fmtClock((Date.now() - L.startedAt) / 1000);
+  }
 }
 let actx = null;
 function unlockAudio() { try { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); if (actx.state === 'suspended') actx.resume(); } catch (e) { actx = null; } }
@@ -743,7 +759,8 @@ setInterval(() => {
   const L = S.live; if (!L) return;
   const el = ui.liveOpen ? $('#clock') : $('#liveBanner .clock');
   if (el) el.textContent = fmtClock((Date.now() - L.startedAt) / 1000);
-  if (L.restEnd) { if (Date.now() >= L.restEnd) { L.restEnd = null; save(); beep(); toast('Repos terminé'); } renderRest(); }
+  if (L.restEnd && Date.now() >= L.restEnd) { L.restEnd = null; save(); beep(); toast('Repos terminé, c’est reparti !'); }
+  renderRest();
 }, 500);
 
 async function boot() {
