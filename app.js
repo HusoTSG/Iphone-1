@@ -113,20 +113,22 @@ const sessionVolume = (s) => s.exercises.reduce((a, e) => a + e.sets.reduce((b, 
 const sessionSets = (s) => s.exercises.reduce((a, e) => a + e.sets.length, 0);
 const todayWd = () => ((new Date().getDay() + 6) % 7) + 1;
 
+// Jours du programme déjà faits cette semaine (lundi → dimanche), quel que soit le jour où la séance a été faite
+function doneThisWeek(prog) {
+  const monday = addDays(dkey(), -(todayWd() - 1));
+  return new Set(S.sessions.filter((s) => s.programId === prog.id && s.dayId && s.date >= monday).map((s) => s.dayId));
+}
 function nextWorkout() {
   const prog = activeProgram();
   if (!prog || !prog.days.length) return null;
-  if (prog.days.some((d) => d.weekday)) {
-    const today = todayWd();
-    const doneToday = S.sessions.some((s) => s.date === dkey() && s.programId === prog.id);
-    let best = null, bestDist = 99;
-    prog.days.forEach((d) => {
-      if (!d.weekday) return;
-      let dist = (d.weekday - today + 7) % 7;
-      if (dist === 0 && doneToday) dist = 7;
-      if (dist < bestDist) { bestDist = dist; best = d; }
-    });
-    if (best) return { prog, day: best, inDays: bestDist };
+  const planned = prog.days.filter((d) => d.weekday).sort((a, b) => a.weekday - b.weekday);
+  if (planned.length) {
+    const today = todayWd(), done = doneThisWeek(prog);
+    const todo = planned.filter((d) => !done.has(d.id));
+    const upcoming = todo.find((d) => d.weekday >= today);
+    if (upcoming) return { prog, day: upcoming, inDays: upcoming.weekday - today };
+    if (todo.length) return { prog, day: todo[0], inDays: 0, late: true };
+    return { prog, day: planned[0], inDays: planned[0].weekday + 7 - today };
   }
   const last = sessionsSorted().find((s) => s.programId === prog.id);
   let idx = 0;
@@ -276,21 +278,30 @@ function confirmSheet({ title, text = '', ok = 'Supprimer', onOk }) {
 }
 
 // ---------- Vue Entraînement ----------
+const DAY_ICONS = {
+  upper: { c: 'linear-gradient(145deg,#4c9dff,#3a5bd9)', svg: '<path d="M6.5 19c-.8-3.6.4-7.4 3-9.8l2.4-2.4 2.6.9-.8 2.8-2.2.4-.9 2.6c2.2-1 5.2-.6 6.6 1.6 1.6 2.6-.4 5.4-3.6 5.4H8.4c-.9 0-1.7-.6-1.9-1.5z" fill="#fff"/>' },
+  lower: { c: 'linear-gradient(145deg,#34d27b,#139e5a)', svg: '<path d="M9.5 3.5v7.5l-1.6 9h2.8l1.3-7.5M14.5 3.5v7.5l1.6 9h-2.8" fill="none" stroke="#fff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>' },
+  push: { c: 'linear-gradient(145deg,#ffa62b,#f56a00)', svg: '<path d="M3.5 6.5h17M6 4v5M18 4v5" stroke="#fff" stroke-width="2.3" stroke-linecap="round"/><path d="M12 20v-9M8.5 14.5 12 11l3.5 3.5" fill="none" stroke="#fff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>' },
+  pull: { c: 'linear-gradient(145deg,#c86bf5,#8a3fe0)', svg: '<path d="M3.5 4.5h17" stroke="#fff" stroke-width="2.3" stroke-linecap="round"/><path d="M7.5 4.5 10 10h4l2.5-5.5" fill="none" stroke="#fff" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/><circle cx="12" cy="13.2" r="2" fill="#fff"/><path d="M12 15.5v4.5" stroke="#fff" stroke-width="2.3" stroke-linecap="round"/>' },
+  leg: { c: 'linear-gradient(145deg,#4fd1e8,#0f8fd6)', svg: '<path d="M9.5 3.5v7.5l-1.6 9h2.8l1.3-7.5M14.5 3.5v7.5l1.6 9h-2.8" fill="none" stroke="#fff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>' },
+  other: { c: 'linear-gradient(145deg,#9a9aa1,#6c6c72)', svg: '<path d="M6.5 7v10M3.5 9.5v5M17.5 7v10M20.5 9.5v5M6.5 12h11" stroke="#fff" stroke-width="2.3" stroke-linecap="round"/>' },
+};
+function dayKind(name) {
+  const n = norm(name);
+  if (/upper|haut/.test(n)) return 'upper';
+  if (/lower|bas/.test(n)) return 'lower';
+  if (/push|pousse/.test(n)) return 'push';
+  if (/pull|tir/.test(n)) return 'pull';
+  if (/leg|jambe/.test(n)) return 'leg';
+  return 'other';
+}
+const dayIcon = (name) => { const k = DAY_ICONS[dayKind(name)]; return `<span class="day-ic" style="background:${k.c}"><svg viewBox="0 0 24 24" width="24" height="24">${k.svg}</svg></span>`; };
+const dayLabel = (d) => esc(d.name.replace(/\s·\s/, ' - '));
+
 const views = {};
 views.train = () => {
   const k = dkey(), prog = activeProgram(), nx = nextWorkout();
-  const doneToday = S.sessions.some((s) => s.date === k);
-  let hero;
-  if (S.live) {
-    hero = `<div class="card" id="liveBanner"><div class="row"><div class="grow"><div class="overline">Séance en cours</div><h2>${esc(S.live.name)}</h2></div><span class="clock" style="font-size:17px">${fmtClock((Date.now() - S.live.startedAt) / 1000)}</span></div><button class="btn filled block" data-a="liveOpen">Reprendre</button></div>`;
-  } else if (nx) {
-    const ov = nx.inDays ? `Prochaine séance · ${nx.inDays === 1 ? 'demain' : `dans ${nx.inDays} jours`}` : 'Aujourd’hui';
-    hero = `<div class="card"><div><div class="overline ${nx.inDays ? 'gray' : ''}">${doneToday && nx.inDays ? 'Séance du jour faite ✓ · ' : ''}${ov}</div><h2>${esc(nx.day.name)}</h2><div class="foot" style="margin-top:2px">${nx.day.exercises.length} exercices · ${esc(nx.prog.name)}</div></div>
-      <div class="ex-list">${nx.day.exercises.map((e) => `<div class="r"><span>${esc(exById(e.exId).name)}</span><span>${exLine(e)}</span></div>`).join('')}</div>
-      <button class="btn filled block" data-a="startWorkout" data-p="${nx.prog.id}" data-d="${nx.day.id}">${ICON.play} Commencer</button></div>`;
-  } else {
-    hero = `<div class="card"><h2>Aucun programme</h2><p class="muted small" style="margin:0">Crée un programme ou lance une séance libre.</p><button class="btn filled block" data-a="startFree">Séance libre</button></div>`;
-  }
+  const live = S.live ? `<div class="card" id="liveBanner"><div class="row"><div class="grow"><div class="overline">Séance en cours</div><h2>${esc(S.live.name)}</h2></div><span class="clock" style="font-size:17px">${fmtClock((Date.now() - S.live.startedAt) / 1000)}</span></div><button class="btn filled block" data-a="liveOpen">Reprendre</button></div>` : '';
   const dow = todayWd() - 1, monday = addDays(k, -dow);
   const doneDays = new Set(S.sessions.map((s) => s.date));
   const planned = new Set(prog ? prog.days.map((d) => d.weekday).filter(Boolean) : []);
@@ -299,11 +310,17 @@ views.train = () => {
     const dk = addDays(monday, i), done = doneDays.has(dk); if (done) nDone++;
     return `<div class="d ${done ? 'done' : ''} ${dk === k ? 'today' : ''} ${planned.has(i + 1) ? 'plan' : ''}">${l}<i>${parseKey(dk).getDate()}</i></div>`;
   }).join('');
-  const days = prog ? prog.days.map((d) => cell({ a: 'dayOpen', data: `data-d="${d.id}"`, badge: `<span class="badge ${nx && nx.day.id === d.id ? 'blue' : 'gray'}">${d.weekday ? WD[d.weekday] : '•'}</span>`, t: esc(d.name.replace(/^\S+ · /, '')), s: `${d.exercises.length} exercices` })).join('') : '';
+  const doneSet = prog ? doneThisWeek(prog) : new Set();
+  const when = (n) => (n.late ? 'À rattraper' : n.inDays === 0 ? 'Aujourd’hui' : n.inDays === 1 ? 'Demain' : 'Prochaine');
+  const days = prog ? prog.days.map((d) => {
+    const isNext = nx && !S.live && nx.day.id === d.id, isDone = doneSet.has(d.id);
+    const v = isNext ? `<span class="pill blue">${when(nx)}</span>` : isDone ? `<span class="pill done">✓ Fait</span>` : '';
+    return cell({ a: 'dayOpen', data: `data-d="${d.id}"`, badge: dayIcon(d.name), t: `<b style="font-weight:600">${dayLabel(d)}</b>`, s: `${d.exercises.length} exercices`, v });
+  }).join('') : '';
   return `<header class="large"><div><h1>Entraînement</h1><div class="sub">${cap(fmtDay(k))}</div></div><button class="icon-btn" data-a="settings" aria-label="Réglages">${ICON.gear}</button></header>
-    ${hero}
+    ${live}
     <div class="section"><div class="section-h">Cette semaine · ${nDone} séance${nDone > 1 ? 's' : ''}</div><div class="card" style="padding:14px 10px"><div class="week">${week}</div></div></div>
-    ${prog ? `<div class="section"><div class="section-h">${esc(prog.name)}</div><div class="group">${days}<button class="cell center" data-a="dayAdd">Ajouter une journée</button></div></div>` : ''}
+    ${prog ? `<div class="section"><div class="section-h">${esc(prog.name)}</div><div class="group">${days}<button class="cell center" data-a="dayAdd">Ajouter une journée</button></div></div>` : '<div class="card"><h2>Aucun programme</h2><p class="muted small" style="margin:0">Crée un programme ou lance une séance libre.</p></div>'}
     <div class="section"><div class="group">
       ${cell({ a: 'startFree', badge: `<span class="badge green">${ICON.play}</span>`, t: 'Séance libre' })}
       ${cell({ a: 'exLibrary', badge: `<span class="badge orange">${ICON.trophy}</span>`, t: 'Exercices et records' })}
