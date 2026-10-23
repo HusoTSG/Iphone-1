@@ -14,6 +14,7 @@ const EXERCISES = [
   { id: 'pec-deck', name: 'Pec deck', muscle: 'Pectoraux', equip: 'Machine' },
   { id: 'smith-decline', name: 'Développé décliné Smith machine', muscle: 'Pectoraux', equip: 'Machine' },
   { id: 'seated-fly', name: 'Écartés assis machine', muscle: 'Pectoraux', equip: 'Machine' },
+  { id: 'decline-press-machine', name: 'Développé décliné machine', muscle: 'Pectoraux', equip: 'Machine' },
   { id: 'dips', name: 'Dips', muscle: 'Pectoraux', equip: 'Poids du corps' },
   { id: 'pushup', name: 'Pompes', muscle: 'Pectoraux', equip: 'Poids du corps' },
   // Dos
@@ -33,6 +34,7 @@ const EXERCISES = [
   { id: 'seated-lateral-bent', name: 'Élévations latérales assis bras fléchis', muscle: 'Épaules', equip: 'Haltères' },
   { id: 'rear-delt', name: 'Oiseau (deltoïde arrière)', muscle: 'Épaules', equip: 'Haltères' },
   { id: 'face-pull', name: 'Face pull', muscle: 'Épaules', equip: 'Poulie' },
+  { id: 'reverse-fly-machine', name: 'Reverse fly machine', muscle: 'Épaules', equip: 'Machine' },
   { id: 'shrug', name: 'Shrugs', muscle: 'Épaules', equip: 'Haltères' },
   // Biceps
   { id: 'barbell-curl', name: 'Curl barre', muscle: 'Biceps', equip: 'Barre' },
@@ -52,6 +54,7 @@ const EXERCISES = [
   { id: 'front-squat', name: 'Squat avant', muscle: 'Quadriceps', equip: 'Barre' },
   { id: 'hack-squat', name: 'Hack squat', muscle: 'Quadriceps', equip: 'Machine' },
   { id: 'leg-press', name: 'Presse à cuisses', muscle: 'Quadriceps', equip: 'Machine' },
+  { id: 'leg-press-narrow', name: 'Presse à cuisses pieds serrés', muscle: 'Quadriceps', equip: 'Machine' },
   { id: 'leg-ext', name: 'Leg extension', muscle: 'Quadriceps', equip: 'Machine' },
   { id: 'bulgarian', name: 'Fentes bulgares', muscle: 'Quadriceps', equip: 'Haltères' },
   { id: 'lunge', name: 'Fentes marchées', muscle: 'Quadriceps', equip: 'Haltères' },
@@ -198,7 +201,7 @@ const SEED_HABITS = [
 const COACH_PROGRAM = {
   id: 'coach',
   name: 'Programme coach',
-  version: 1,
+  version: 2,
   days: [
     { id: 'mon-upper', name: 'Lundi · Upper', weekday: 1, exercises: [
       { exId: 'lat-pulldown', sets: 3, reps: '8-12', kg: 36.5, rest: 120, note: '1-2 RIR' },
@@ -208,6 +211,28 @@ const COACH_PROGRAM = {
       { exId: 'seated-lateral-bent', sets: 3, reps: '10-15', kg: 8, rest: 90, note: '1-2 RIR' },
       { exId: 'incline-curl', sets: 3, reps: '8-12', kg: 12, rest: 90, note: '1-2 RIR' },
       { exId: 'rope-pushdown', sets: 3, reps: '10-15', kg: 18.7, rest: 90, note: '1-2 RIR' },
+    ] },
+    { id: 'tue-lower', name: 'Mardi · Lower', weekday: 2, exercises: [
+      { exId: 'leg-ext', sets: 3, reps: '10-15', kg: 66, rest: 90, note: '1-2 RIR' },
+      { exId: 'bulgarian', sets: 3, reps: '8-12', kg: 22, rest: 120, note: '1-2 RIR · reps par jambe' },
+      { exId: 'leg-press-narrow', sets: 3, reps: '10-15', kg: 70, rest: 120, note: '1-2 RIR' },
+      { exId: 'leg-curl', sets: 3, reps: '10-15', kg: 46, rest: 90, note: '1-2 RIR' },
+      { exId: 'calf-standing', sets: 3, reps: '10-15', kg: 57.5, rest: 60, note: '1-2 RIR' },
+    ] },
+    { id: 'thu-push', name: 'Jeudi · Push', weekday: 4, exercises: [
+      { exId: 'seated-fly', sets: 3, reps: '10-15', kg: 62.2, rest: 90, note: '1-2 RIR' },
+      { exId: 'incline-db', sets: 3, reps: '8-12', kg: 20, rest: 120, note: '1-2 RIR · banc incliné au cran 2' },
+      { exId: 'decline-press-machine', sets: 3, reps: '8-12', kg: 50, rest: 120, note: '1-2 RIR · assise à 5-6' },
+      { exId: 'db-shoulder', sets: 3, reps: '8-12', kg: 16, rest: 120, note: '1-2 RIR · banc au cran 5' },
+      { exId: 'cable-lateral', sets: 3, reps: '10-15', kg: 3.5, rest: 60, note: '1-2 RIR · un bras, reps par bras' },
+      { exId: 'skullcrusher', sets: 3, reps: '10-15', kg: 12.5, rest: 90, note: '1-2 RIR · amplitude confortable' },
+    ] },
+    { id: 'fri-pull', name: 'Vendredi · Pull', weekday: 5, exercises: [
+      { exId: 'rear-delt', sets: 3, reps: '15-20', kg: 6, rest: 60, note: '1-2 RIR · arrière d’épaule' },
+      { exId: 'lat-pulldown', sets: 3, reps: '8-12', kg: 36.5, rest: 120, note: '1-2 RIR' },
+      { exId: 'seated-row', sets: 3, reps: '8-12', kg: 57, rest: 120, note: '1-2 RIR' },
+      { exId: 'reverse-fly-machine', sets: 3, reps: '10-15', kg: 35.2, rest: 90, note: '' },
+      { exId: 'cable-curl', sets: 3, reps: '10-15', kg: 28.5, rest: 90, note: '' },
     ] },
   ],
   // Séances déjà faites, pour que la colonne « Préc. » et les courbes partent de là.
@@ -220,6 +245,28 @@ const COACH_PROGRAM = {
       { exId: 'seated-lateral-bent', sets: [[8, 15], [8, 15], [8, 15]] },
       { exId: 'incline-curl', sets: [[12, 8], [12, 8], [12, 8]] },
       { exId: 'rope-pushdown', sets: [[18.7, 13], [18.7, 13], [18.7, 13]] },
+    ] },
+    { date: '2026-10-20', dayId: 'tue-lower', name: 'Mardi · Lower', exercises: [
+      { exId: 'leg-ext', sets: [[66, 10], [66, 10], [66, 10]] },
+      { exId: 'bulgarian', sets: [[22, 8], [22, 8], [22, 8]] },
+      { exId: 'leg-press-narrow', sets: [[70, 13], [70, 14], [70, 14]] },
+      { exId: 'leg-curl', sets: [[46, 11], [46, 11], [46, 12]] },
+      { exId: 'calf-standing', sets: [[57.5, 12], [57.5, 12], [57.5, 13]] },
+    ] },
+    { date: '2026-10-22', dayId: 'thu-push', name: 'Jeudi · Push', exercises: [
+      { exId: 'seated-fly', sets: [[62.2, 12], [62.2, 13], [62.2, 13]] },
+      { exId: 'incline-db', sets: [[20, 8], [20, 8], [20, 8]] },
+      { exId: 'decline-press-machine', sets: [[50, 8], [50, 8], [50, 8]] },
+      { exId: 'db-shoulder', sets: [[16, 9], [16, 9], [16, 9]] },
+      { exId: 'cable-lateral', sets: [[3.5, 12], [3.5, 12], [3.5, 12]] },
+      { exId: 'skullcrusher', sets: [[12.5, 13], [12.5, 13], [12.5, 13]] },
+    ] },
+    { date: '2026-10-16', dayId: 'fri-pull', name: 'Vendredi · Pull', exercises: [
+      { exId: 'rear-delt', sets: [[6, 19], [6, 19], [6, 20]] },
+      { exId: 'lat-pulldown', sets: [[36.5, 10], [36.2, 10], [36.2, 10]] },
+      { exId: 'seated-row', sets: [[57, 8], [57, 8], [57, 8]] },
+      { exId: 'reverse-fly-machine', sets: [[35.2, 13], [35.2, 14], [35.2, 14]] },
+      { exId: 'cable-curl', sets: [[28.5, 14], [28.5, 15], [28.5, 15]] },
     ] },
   ],
 };
