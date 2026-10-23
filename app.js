@@ -124,12 +124,13 @@ function nextWorkout() {
   if (!prog || !prog.days.length) return null;
   const planned = prog.days.filter((d) => d.weekday).sort((a, b) => a.weekday - b.weekday);
   if (planned.length) {
-    const today = todayWd(), done = doneThisWeek(prog);
-    const todo = planned.filter((d) => !done.has(d.id));
-    const upcoming = todo.find((d) => d.weekday >= today);
-    if (upcoming) return { prog, day: upcoming, inDays: upcoming.weekday - today };
-    if (todo.length) return { prog, day: todo[0], inDays: 0, late: true };
-    return { prog, day: planned[0], inDays: planned[0].weekday + 7 - today };
+    // Suit l'ordre du programme : la prochaine est celle qui vient après la dernière faite cette semaine
+    const done = doneThisWeek(prog);
+    let lastIdx = -1;
+    planned.forEach((d, k) => { if (done.has(d.id)) lastIdx = k; });
+    const after = planned.slice(lastIdx + 1).find((d) => !done.has(d.id));
+    const anyTodo = planned.find((d) => !done.has(d.id));
+    return { prog, day: after || anyTodo || planned[0], inDays: 0 };
   }
   const last = sessionsSorted().find((s) => s.programId === prog.id);
   let idx = 0;
@@ -322,10 +323,9 @@ views.train = () => {
   const k = dkey(), prog = activeProgram(), nx = nextWorkout();
   const live = S.live ? `<div class="card" id="liveBanner"><div class="row"><div class="grow"><div class="overline">Séance en cours</div><h2>${esc(S.live.name)}</h2></div><span class="clock" style="font-size:17px">${fmtClock((Date.now() - S.live.startedAt) / 1000)}</span></div><button class="btn filled block" data-a="liveOpen">Reprendre</button></div>` : '';
   const doneSet = prog ? doneThisWeek(prog) : new Set();
-  const when = (n) => (n.late ? 'À rattraper' : n.inDays === 0 ? 'Aujourd’hui' : n.inDays === 1 ? 'Demain' : 'Prochaine');
   const days = prog ? prog.days.map((d) => {
     const isNext = nx && !S.live && nx.day.id === d.id, isDone = doneSet.has(d.id);
-    const v = isNext ? `<span class="tag next">${when(nx)}</span>` : isDone ? `<span class="tag done">✓</span>` : '';
+    const v = isNext ? `<span class="next-pill">PROCHAIN</span>` : isDone ? `<span class="tag done">✓</span>` : '';
     return cell({ a: 'dayOpen', cls: `day-row${isNext ? ' next' : ''}`, data: `data-d="${d.id}"`, badge: dayIcon(d), t: dayLabel(d), v });
   }).join('') : '';
   return `<header class="large"><div><h1>Entraînement</h1><div class="sub">${cap(fmtDay(k))}</div></div><button class="icon-btn" data-a="settings" aria-label="Réglages">${ICON.gear}</button></header>
@@ -533,7 +533,7 @@ function renderLive() {
       <div style="justify-self:end"><button class="btn filled sm" data-a="liveFinish">Terminer</button></div></div></div>
     <div class="live-body">${L.exercises.map(liveExCard).join('') || '<div class="exc"><div class="empty">Ajoute ton premier exercice.</div></div>'}
       <button class="btn filled block" data-a="liveAddEx">Ajouter un exercice</button>
-      <button class="btn block pill-red" data-a="liveCancel">Abandonner la séance</button></div></div>`;
+      <button class="btn red block" data-a="liveCancel">Abandonner la séance</button></div></div>`;
   root.querySelector('.live').scrollTop = sc;
   renderRest();
 }
