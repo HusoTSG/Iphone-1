@@ -302,14 +302,6 @@ const views = {};
 views.train = () => {
   const k = dkey(), prog = activeProgram(), nx = nextWorkout();
   const live = S.live ? `<div class="card" id="liveBanner"><div class="row"><div class="grow"><div class="overline">Séance en cours</div><h2>${esc(S.live.name)}</h2></div><span class="clock" style="font-size:17px">${fmtClock((Date.now() - S.live.startedAt) / 1000)}</span></div><button class="btn filled block" data-a="liveOpen">Reprendre</button></div>` : '';
-  const dow = todayWd() - 1, monday = addDays(k, -dow);
-  const doneDays = new Set(S.sessions.map((s) => s.date));
-  const planned = new Set(prog ? prog.days.map((d) => d.weekday).filter(Boolean) : []);
-  let nDone = 0;
-  const week = ['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((l, i) => {
-    const dk = addDays(monday, i), done = doneDays.has(dk); if (done) nDone++;
-    return `<div class="d ${done ? 'done' : ''} ${dk === k ? 'today' : ''} ${planned.has(i + 1) ? 'plan' : ''}">${l}<i>${parseKey(dk).getDate()}</i></div>`;
-  }).join('');
   const doneSet = prog ? doneThisWeek(prog) : new Set();
   const when = (n) => (n.late ? 'À rattraper' : n.inDays === 0 ? 'Aujourd’hui' : n.inDays === 1 ? 'Demain' : 'Prochaine');
   const days = prog ? prog.days.map((d) => {
@@ -319,8 +311,7 @@ views.train = () => {
   }).join('') : '';
   return `<header class="large"><div><h1>Entraînement</h1><div class="sub">${cap(fmtDay(k))}</div></div><button class="icon-btn" data-a="settings" aria-label="Réglages">${ICON.gear}</button></header>
     ${live}
-    <div class="section"><div class="section-h">Cette semaine · ${nDone} séance${nDone > 1 ? 's' : ''}</div><div class="card" style="padding:14px 10px"><div class="week">${week}</div></div></div>
-    ${prog ? `<div class="section"><div class="section-h">${esc(prog.name)}</div><div class="group">${days}<button class="cell center" data-a="dayAdd">Ajouter une journée</button></div></div>` : '<div class="card"><h2>Aucun programme</h2><p class="muted small" style="margin:0">Crée un programme ou lance une séance libre.</p></div>'}
+    ${prog ? `<div class="section"><div class="section-h">${esc(prog.name)} · ${doneSet.size}/${prog.days.length} cette semaine</div><div class="group">${days}<button class="cell center" data-a="dayAdd">Ajouter une journée</button></div></div>` : '<div class="card"><h2>Aucun programme</h2><p class="muted small" style="margin:0">Crée un programme ou lance une séance libre.</p></div>'}
     <div class="section"><div class="group">
       ${cell({ a: 'startFree', badge: `<span class="badge green">${ICON.play}</span>`, t: 'Séance libre' })}
       ${cell({ a: 'exLibrary', badge: `<span class="badge orange">${ICON.trophy}</span>`, t: 'Exercices et records' })}
