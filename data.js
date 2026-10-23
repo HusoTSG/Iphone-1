@@ -84,7 +84,7 @@ const EXERCISES = [
 const COACH_PROGRAM = {
   id: 'coach',
   name: 'Programme coach',
-  version: 4,
+  version: 5,
   days: [
     { id: 'mon-upper', name: 'Lundi · Upper', weekday: 1, exercises: [
       { exId: 'lat-pulldown', sets: 3, reps: '8-12', kg: 36.5, rest: 120, note: '1-2 RIR' },
@@ -107,7 +107,7 @@ const COACH_PROGRAM = {
       { exId: 'incline-db', sets: 3, reps: '8-12', kg: 20, rest: 120, note: '1-2 RIR · banc incliné au cran 2' },
       { exId: 'decline-press-machine', sets: 3, reps: '8-12', kg: 50, rest: 120, note: '1-2 RIR · assise à 5-6' },
       { exId: 'db-shoulder', sets: 3, reps: '8-12', kg: 16, rest: 120, note: '1-2 RIR · banc au cran 5' },
-      { exId: 'cable-lateral', sets: 3, reps: '10-15', kg: 3.5, rest: 60, note: '1-2 RIR · un bras, reps par bras' },
+      { exId: 'cable-lateral', sets: 3, reps: '10-15', kg: 3.5, rest: 90, note: '1-2 RIR · un bras, reps par bras' },
       { exId: 'skullcrusher', sets: 3, reps: '10-15', kg: 12.5, rest: 90, note: '1-2 RIR · amplitude confortable' },
     ] },
     { id: 'fri-pull', name: 'Vendredi · Pull', weekday: 5, exercises: [
