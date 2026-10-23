@@ -175,7 +175,7 @@ const TRASH = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" strok
 const swipeRow = (kind, id, cellHtml) => `<div class="swipe" data-kind="${kind}" data-id="${id}"><button class="swipe-act" data-a="swipeDel" aria-label="Supprimer"><span class="in">${TRASH}<span>Supprimer</span></span></button>${cellHtml}</div>`;
 let sw = null, blockClickUntil = 0;
 function closeSwipes(except) {
-  $$('.swipe.open').forEach((x) => { if (x !== except) { x.classList.remove('open'); x.querySelector('.swipe-fg').style.transform = ''; } });
+  $$('.swipe.open').forEach((x) => { if (x !== except) { x.classList.remove('open'); x.querySelector('.swipe-fg').style.transform = ''; setTimeout(() => { if (!x.classList.contains('open')) x.classList.remove('reveal'); }, 300); } });
 }
 function swipeDelete(row) {
   const kind = row.dataset.kind, id = row.dataset.id;
@@ -204,7 +204,7 @@ document.addEventListener('pointermove', (e) => {
   if (!sw) return;
   const dx = e.clientX - sw.x0, dy = e.clientY - sw.y0;
   if (!sw.moving) {
-    if (Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy)) { sw.moving = true; closeSwipes(sw.row); sw.fg.style.transition = 'none'; }
+    if (Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy)) { sw.moving = true; closeSwipes(sw.row); sw.row.classList.add('reveal'); sw.fg.style.transition = 'none'; }
     else if (Math.abs(dy) > 8) { sw = null; return; } else return;
   }
   sw.x = Math.min(0, sw.base + dx);
@@ -220,7 +220,7 @@ document.addEventListener('pointerup', () => {
   if (s0.x < -s0.w * 0.55) { s0.fg.style.transform = 'translateX(-100%)'; swipeDelete(s0.row); return; }
   s0.row.classList.remove('full');
   if (s0.x < -40) { s0.row.classList.add('open'); s0.fg.style.transform = `translateX(-${SWIPE_W}px)`; }
-  else { s0.row.classList.remove('open'); s0.fg.style.transform = ''; }
+  else { s0.row.classList.remove('open'); s0.fg.style.transform = ''; setTimeout(() => { if (!s0.row.classList.contains('open')) s0.row.classList.remove('reveal'); }, 300); }
 });
 document.addEventListener('pointercancel', () => {
   if (sw && sw.moving) { sw.fg.style.transition = ''; sw.fg.style.transform = sw.row.classList.contains('open') ? `translateX(-${SWIPE_W}px)` : ''; sw.row.classList.remove('full'); }
