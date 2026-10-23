@@ -306,6 +306,8 @@ const LINE = {
   press: '<path d="M4 4.5h16M7 2.5v4M17 2.5v4"/><path d="M8 20.5v-6l2-3.5M16 20.5v-6l-2-3.5"/><circle cx="12" cy="9" r="1.6"/>',
   arm: '<path d="M5 19.5c-.6-3.4.6-7 3.2-9.3l2.3-2.2 2.4.8-.7 2.6-2 .4-.9 2.5c2-.9 4.8-.6 6.1 1.5 1.5 2.4-.4 5-3.3 5H6.8c-.9 0-1.6-.6-1.8-1.3z"/>',
   abs: '<rect x="6.5" y="3.5" width="11" height="17" rx="4"/><path d="M12 3.5v17M6.8 9h10.4M6.8 14.5h10.4"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  xmark: '<path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/>',
   heart: '<path d="M12 20s-7.5-4.6-7.5-10.1A4.3 4.3 0 0 1 12 7.3a4.3 4.3 0 0 1 7.5 2.6C19.5 15.4 12 20 12 20z"/>',
 };
 const lineIcon = (k, size = 24) => `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${LINE[k] || LINE.dumbbell}</svg>`;
@@ -329,11 +331,11 @@ views.train = () => {
   return `<header class="large"><div><h1>Entraînement</h1><div class="sub">${cap(fmtDay(k))}</div></div><button class="icon-btn" data-a="settings" aria-label="Réglages">${ICON.gear}</button></header>
     ${live}
     ${prog ? `<div class="section"><div class="section-h">${esc(prog.name)} · ${doneSet.size}/${prog.days.length} cette semaine</div><div class="day-pills">${days}</div><button class="link" data-a="dayAdd" style="align-self:center">+ Ajouter une journée</button></div>` : '<div class="card"><h2>Aucun programme</h2><p class="muted small" style="margin:0">Crée un programme ou lance une séance libre.</p></div>'}
-    <div class="section"><div class="group">
-      ${cell({ a: 'startFree', badge: `<span class="line-ic">${ICON.play}</span>`, t: 'Séance libre' })}
-      ${cell({ a: 'exLibrary', badge: `<span class="line-ic">${ICON.trophy}</span>`, t: 'Exercices et records' })}
-      ${cell({ a: 'programs', badge: `<span class="line-ic">${ICON.list}</span>`, t: 'Programmes', v: S.programs.length > 1 ? String(S.programs.length) : '' })}
-    </div></div>`;
+    <div class="day-pills">
+      ${cell({ a: 'startFree', cls: 'day-row', badge: `<span class="line-ic">${ICON.play}</span>`, t: 'Séance libre' })}
+      ${cell({ a: 'exLibrary', cls: 'day-row', badge: `<span class="line-ic">${ICON.trophy}</span>`, t: 'Exercices et records' })}
+      ${cell({ a: 'programs', cls: 'day-row', badge: `<span class="line-ic">${ICON.list}</span>`, t: 'Programmes', v: S.programs.length > 1 ? String(S.programs.length) : '' })}
+    </div>`;
 };
 
 // ---------- Vue Historique ----------
@@ -530,8 +532,10 @@ function renderLive() {
       <div class="mid"><div class="n">${esc(L.name)}</div><div class="clock" id="clock">${fmtClock((Date.now() - L.startedAt) / 1000)}</div></div>
       <div style="justify-self:end"><button class="btn filled sm" data-a="liveFinish">Terminer</button></div></div></div>
     <div class="live-body">${L.exercises.map(liveExCard).join('') || '<div class="exc"><div class="empty">Ajoute ton premier exercice.</div></div>'}
-      <button class="btn tinted block" data-a="liveAddEx">Ajouter un exercice</button>
-      <button class="btn red block" data-a="liveCancel">Abandonner la séance</button></div></div>`;
+      <div class="day-pills">
+        <button class="cell day-row act" data-a="liveAddEx"><span class="line-ic">${lineIcon('plus', 24)}</span><span class="main"><span class="t">Ajouter un exercice</span></span></button>
+        <button class="cell day-row act red" data-a="liveCancel"><span class="line-ic">${lineIcon('xmark', 24)}</span><span class="main"><span class="t">Abandonner la séance</span></span></button>
+      </div></div></div>`;
   root.querySelector('.live').scrollTop = sc;
   renderRest();
 }

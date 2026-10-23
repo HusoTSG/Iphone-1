@@ -691,3 +691,14 @@ h2 { font-family: var(--font-display); font-weight: 700; letter-spacing: 0.2px; 
 .ex-row { min-height: 56px; padding: 11px 14px; }
 .ex-row .t { font-size: 16px; font-weight: 500; }
 .ex-row .ex-ic { background: transparent; width: 28px; }
+
+/* Rectangles d'action (séance) */
+.day-row.act .t { color: var(--blue); font-weight: 500; }
+.day-row.act .line-ic { color: var(--blue); }
+.day-row.act.red .t, .day-row.act.red .line-ic { color: var(--red); }
+
+/* Bande unie derrière la barre d'état : supprime le flou d'iOS 26 en haut */
+body::before {
+  content: ''; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px);
+  background: var(--bg); z-index: 35; pointer-events: none;
+}
