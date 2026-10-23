@@ -64,7 +64,7 @@ const Store = {
 
 // ---------- État ----------
 function defaultState() {
-  return { v: 2, settings: { rest: 90, theme: 'auto', bar: 20 }, programs: [], activeProgramId: null, customExercises: [], sessions: [], live: null, checks: [], coachVersion: 0 };
+  return { v: 2, settings: { rest: 90, theme: 'auto', bar: 20, iosTimer: false }, programs: [], activeProgramId: null, customExercises: [], sessions: [], live: null, checks: [], coachVersion: 0 };
 }
 let S = defaultState();
 const ui = { tab: 'train', liveOpen: true, chart: 'kg' };
@@ -552,10 +552,36 @@ function settingsSheet() {
       <div class="section"><div class="section-h">Séance</div><div class="form-group">
         <div class="fr"><label for="s-rest">Repos par défaut</label><select id="s-rest" data-change="setting" data-k="rest" style="width:auto;background:transparent">${[45, 60, 90, 120, 150, 180, 240].map((v) => `<option value="${v}" ${S.settings.rest === v ? 'selected' : ''}>${fmtRest(v)}</option>`).join('')}</select></div>
         <div class="fr"><label for="s-bar">Barre</label><select id="s-bar" data-change="setting" data-k="bar" style="width:auto;background:transparent">${[20, 15, 10].map((v) => `<option value="${v}" ${S.settings.bar === v ? 'selected' : ''}>${v} kg</option>`).join('')}</select></div></div></div>
+      <div class="section"><div class="section-h">Minuteur iPhone</div><div class="form-group">
+        <div class="fr"><label for="s-ios">Utiliser le minuteur de l’iPhone</label><input type="checkbox" class="switch" id="s-ios" data-change="iosTimer" ${S.settings.iosTimer ? 'checked' : ''}></div></div>
+        <div class="group" style="margin-top:8px">${cell({ a: 'timerGuide', t: 'Créer le raccourci (une seule fois)' })}</div>
+        <div class="section-f">Le repos s’affiche dans la Dynamic Island et l’iPhone sonne quand c’est le moment de reprendre, même verrouillé.</div></div>
       <div class="section"><div class="section-h">Apparence</div><div class="segment">${[['auto', 'Auto'], ['light', 'Clair'], ['dark', 'Sombre']].map(([v, n]) => `<button class="${S.settings.theme === v ? 'on' : ''}" data-a="theme" data-v="${v}">${n}</button>`).join('')}</div></div>
       <div class="section"><div class="section-h">Sauvegarde</div><div class="group">${cell({ a: 'exportData', t: '<span style="color:var(--blue)">Exporter mes données</span>', chev: false })}<label class="cell" style="cursor:pointer"><span class="main"><span class="t" style="color:var(--blue)">Importer une sauvegarde</span></span><input class="vh" type="file" accept="application/json,.json" data-change="importData"></label></div>
         <div class="section-f">Tes données restent sur cet iPhone. Exporte-les de temps en temps vers Fichiers ou iCloud Drive.</div></div>
       <div class="group"><button class="cell danger" data-a="wipe">Effacer toutes les données</button></div>`,
+  });
+}
+
+// Lance le raccourci « HusoFit Repos » qui démarre le minuteur de l'iPhone (Dynamic Island + sonnerie)
+const SHORTCUT = 'HusoFit Repos';
+function runIosTimer(sec) {
+  try { window.location.href = `shortcuts://run-shortcut?name=${encodeURIComponent(SHORTCUT)}&input=text&text=${Math.round(sec)}`; } catch (e) { toast('Impossible d’ouvrir Raccourcis'); }
+}
+function timerGuideSheet() {
+  const step = (n, html) => `<div class="cell" style="align-items:flex-start"><span class="badge blue" style="border-radius:50%;width:26px;height:26px">${n}</span><span class="main"><span class="t" style="display:block">${html}</span></span></div>`;
+  openSheet({
+    render: () => `${sheetHead('Minuteur iPhone')}
+      <p class="muted small" style="margin:0">À faire une seule fois. Ensuite, chaque série validée lance le minuteur de l’iPhone : il s’affiche dans la Dynamic Island et sonne à la fin du repos, même téléphone verrouillé.</p>
+      <div class="group">
+        ${step(1, 'Ouvre l’appli <b>Raccourcis</b> et touche <b>+</b> en haut à droite.')}
+        ${step(2, 'Touche le nom en haut et renomme le raccourci exactement <b>HusoFit Repos</b>.')}
+        ${step(3, 'Touche <b>Ajouter une action</b>, cherche <b>Démarrer le minuteur</b> et ajoute-la.')}
+        ${step(4, 'Touche le chiffre (<b>30</b>), puis choisis <b>Entrée du raccourci</b>.')}
+        ${step(5, 'Touche <b>minutes</b> et choisis <b>secondes</b>. Touche <b>OK</b>.')}
+      </div>
+      <button class="btn tinted block" data-a="timerTest">Tester (10 secondes)</button>
+      <div class="section-f">Après chaque série, l’iPhone passe une seconde par Raccourcis : glisse la barre du bas vers la droite pour revenir sur HusoFit. La première fois, iOS te demande l’autorisation : touche « Autoriser ».</div>`,
   });
 }
 
@@ -572,6 +598,8 @@ const A = {
   closeSheet() { closeSheet(); },
   confirmOk() { const c = topSheet(); closeSheet(); c.onOk(); },
   settings() { settingsSheet(); },
+  timerGuide() { timerGuideSheet(); },
+  timerTest() { runIosTimer(10); },
 
   startWorkout(el) { unlockAudio(); startWorkout(el.dataset.p, el.dataset.d); },
   startFree() { unlockAudio(); startWorkout(null, null); },
@@ -588,6 +616,7 @@ const A = {
     if (s.kg === '') s.kg = '0';
     s.done = true; L.restTotal = e.rest; L.restEnd = Date.now() + e.rest * 1000;
     save(); renderLive();
+    if (S.settings.iosTimer) runIosTimer(e.rest);
   },
   liveAddSet(el) { S.live.exercises[+el.dataset.e].sets.push({ kg: '', reps: '', done: false }); save(); renderLive(); },
   liveDelSet(el) { const e = S.live.exercises[+el.dataset.e]; if (e.sets.length > 1) e.sets.pop(); save(); renderLive(); },
@@ -662,6 +691,7 @@ const IN = {
 };
 const CH = {
   setting(el) { S.settings[el.dataset.k] = Number(el.value); save(); },
+  iosTimer(el) { S.settings.iosTimer = el.checked; save(); if (el.checked) toast('Pense à créer le raccourci « HusoFit Repos »'); },
   plateBar(el) { const c = topSheet(); c.bar = Number(el.value); $('#plRes', c.el).innerHTML = c.result(); },
   dayWd(el) { const c = topSheet(); const v = Number(el.value); c.dy.weekday = v || undefined; save(); },
   importData(el) {
