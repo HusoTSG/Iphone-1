@@ -337,7 +337,7 @@ views.train = () => {
   }).join('') : '';
   return `<header class="large train-h"><h1>Entraînement</h1><div class="row" style="gap:10px"><button class="icon-btn" data-a="moreMenu" aria-label="Plus d’options">${ICON.more}</button><button class="icon-btn" data-a="settings" aria-label="Réglages">${ICON.gear}</button></div></header>
     ${live}
-    ${prog ? `<div class="section prog-sec"><div class="section-h week-count">${doneSet.size}/${prog.days.length}</div><div class="day-pills fill">${days}</div></div>` : '<div class="card"><h2>Aucun programme</h2><p class="muted small" style="margin:0">Touche ••• en haut pour créer un programme ou lancer une séance libre.</p></div>'}`;
+    ${prog ? `<div class="section prog-sec"><div class="week-prog" role="img" aria-label="${doneSet.size} séances sur ${prog.days.length} cette semaine"><div class="wp-top"><span>Cette semaine</span><b>${doneSet.size} sur ${prog.days.length}</b></div><div class="wp-bar">${prog.days.map((d) => `<i class="${doneSet.has(d.id) ? 'on' : nx && nx.day.id === d.id ? 'nx' : ''}"></i>`).join('')}</div></div><div class="day-pills fill">${days}</div></div>` : '<div class="card"><h2>Aucun programme</h2><p class="muted small" style="margin:0">Touche ••• en haut pour créer un programme ou lancer une séance libre.</p></div>'}`;
 };
 
 // ---------- Vue Historique ----------

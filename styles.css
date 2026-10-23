@@ -730,3 +730,12 @@ body::before {
 header.large.train-h { align-items: center; }
 header.large.train-h .icon-btn { color: var(--label); }
 .section-h.week-count { font-variant-numeric: tabular-nums; }
+
+/* Progression de la semaine : barre segmentée façon Apple */
+.week-prog { padding: 2px 4px 4px; }
+.wp-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; font-size: 15px; color: var(--label-2); }
+.wp-top b { color: var(--label); font-weight: 600; font-variant-numeric: tabular-nums; }
+.wp-bar { display: flex; gap: 5px; }
+.wp-bar i { flex: 1; height: 6px; border-radius: 3px; background: var(--fill, rgba(127,127,127,0.22)); }
+.wp-bar i.on { background: var(--green); }
+.wp-bar i.nx { background: var(--blue); opacity: 0.45; }
