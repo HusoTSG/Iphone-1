@@ -729,7 +729,7 @@ function applyTheme() {
   const t = S.settings.theme;
   if (t === 'auto') document.documentElement.removeAttribute('data-theme'); else document.documentElement.setAttribute('data-theme', t);
   const dark = t === 'dark' || (t === 'auto' && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
-  const m = $('meta[name="theme-color"]'); if (m) m.setAttribute('content', dark ? '#1f1e1d' : '#f7f5ef');
+  const m = $('meta[name="theme-color"]'); if (m) m.setAttribute('content', dark ? '#121212' : '#f2f2f2');
 }
 
 // ---------- Actions ----------
