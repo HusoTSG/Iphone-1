@@ -160,7 +160,7 @@ function syncCoach() {
     if (dy) S.live.exercises.forEach((e, i) => {
       let t = dy.exercises.find((x) => x.exId === e.exId);
       if (!t && !e.sets.some((s) => s.done) && dy.exercises[i] && !S.live.exercises.some((x) => x.exId === dy.exercises[i].exId)) { t = dy.exercises[i]; e.exId = t.exId; e.kg = t.kg || 0; e.note = t.note || ''; }
-      if (t) e.rest = t.rest;
+      if (t) { e.rest = t.rest; e.kg = t.kg || 0; }
     });
   }
   if (first) S.activeProgramId = C.id;
@@ -637,9 +637,9 @@ function liveCircuit(idx) {
       const h = holdOf(e);
       const meta = h ? (h.sides > 1 ? 'chaque côté' : '') : cleanNote(e.note);
       html += `<div class="tour-ex"><div class="tour-name"><button class="tn" data-a="exHist" data-e="${i}">${esc(ex.name)}</button>${meta ? `<span class="tm">${esc(meta)}</span>` : ''}${h && !s.done ? `<button class="tour-hold" data-a="holdStart" data-e="${i}" data-s="${k}" aria-label="Lancer le chrono">${ICON.stopwatch}${h.hold} s</button>` : ''}</div>
-        <div class="uf-row${h ? ' one' : ''}${s.done ? ' done' : ''}">
+        <div class="uf-row${s.done ? ' done' : ''}">
           <label class="uf"><input type="text" inputmode="numeric" id="ls-${i}-${k}-reps" value="${esc(s.reps)}" placeholder="${esc(phR)}" data-in="liveSet" data-e="${i}" data-s="${k}" data-f="reps" aria-label="${h ? 'Secondes' : 'Répétitions'} ${esc(ex.name)} tour ${k + 1}"><span class="u">${h ? 's' : 'reps'}</span></label>
-          ${h ? '' : `<label class="uf"><input type="text" inputmode="decimal" id="ls-${i}-${k}-kg" value="${esc(s.kg)}" placeholder="${esc(phKg)}" data-in="liveSet" data-e="${i}" data-s="${k}" data-f="kg" aria-label="Charge ${esc(ex.name)} tour ${k + 1}"><span class="u">kg</span></label>`}
+          ${`<label class="uf"><input type="text" inputmode="decimal" id="ls-${i}-${k}-kg" value="${esc(s.kg)}" placeholder="${esc(phKg)}" data-in="liveSet" data-e="${i}" data-s="${k}" data-f="kg" aria-label="Charge ${esc(ex.name)} tour ${k + 1}"><span class="u">kg</span></label>`}
         </div></div>`;
     });
     html += done
@@ -660,8 +660,8 @@ function liveExCard(e, i) {
     const phKg = e.kg ? nf(e.kg, 2) : p ? nf(p.kg, 2) : j > 0 ? e.sets[j - 1].kg : '';
     const phR = p ? p.reps : j > 0 && e.sets[j - 1].reps !== '' ? e.sets[j - 1].reps : (e.repsT || '');
     return `<div class="row-wrap ${s.done ? 'done' : ''}">
-      <input type="text" inputmode="numeric" id="ls-${i}-${j}-reps" value="${esc(s.reps)}" placeholder="${esc(phR)}" data-in="liveSet" data-e="${i}" data-s="${j}" data-f="reps" aria-label="Répétitions série ${j + 1}">
-      <input type="text" inputmode="decimal" id="ls-${i}-${j}-kg" value="${esc(s.kg)}" placeholder="${esc(phKg)}" data-in="liveSet" data-e="${i}" data-s="${j}" data-f="kg" aria-label="Charge série ${j + 1}">
+      <label class="uf"><input type="text" inputmode="numeric" id="ls-${i}-${j}-reps" value="${esc(s.reps)}" placeholder="${esc(phR)}" data-in="liveSet" data-e="${i}" data-s="${j}" data-f="reps" aria-label="${holdOf(e) ? 'Secondes' : 'Répétitions'} série ${j + 1}"><span class="u">${holdOf(e) ? 's' : 'reps'}</span></label>
+      <label class="uf"><input type="text" inputmode="decimal" id="ls-${i}-${j}-kg" value="${esc(s.kg)}" placeholder="${esc(phKg)}" data-in="liveSet" data-e="${i}" data-s="${j}" data-f="kg" aria-label="Charge série ${j + 1}"><span class="u">kg</span></label>
       <button class="tick ${s.done ? 'on' : ''}" data-a="liveToggle" data-e="${i}" data-s="${j}" aria-label="Valider la série ${j + 1}">${ICON.check}</button></div>`;
   }).join('');
   const note = cleanNote(e.note);
@@ -669,7 +669,7 @@ function liveExCard(e, i) {
   return `<div class="exc"><div class="hd">${exIcon(ex)}<div class="grow"><h3>${esc(ex.name)}</h3>${meta ? `<div class="meta">${meta}</div>` : ''}</div>
       <button class="icon-btn plain" data-a="exHist" data-e="${i}" aria-label="Historique et options">${ICON.clock}</button>
       ${allDone ? `<button class="icon-btn plain" data-a="liveCollapse" data-e="${i}" aria-label="Réduire">${ICON.up}</button>` : ''}</div>
-    <div class="sets"><div class="h">Reps</div><div class="h">kg</div><div class="h"></div>${rows}</div>
+    <div class="sets uf-sets">${rows}</div>
     ${holdOf(e) && !allDone ? `<button class="btn hold-btn" data-a="holdStart" data-e="${i}">${ICON.stopwatch}Chrono ${holdOf(e).hold} s${holdOf(e).sides > 1 ? ' de chaque côté' : ''}</button>` : ''}
     <button class="link small" data-a="liveAddSet" data-e="${i}" style="align-self:flex-start;padding:0">+ Ajouter une série</button></div>`;
 }
