@@ -154,6 +154,15 @@ function syncCoach() {
     if (S.sessions.some((x) => x.id === id)) return;
     S.sessions.push({ id, date: l.date, startedAt: parseKey(l.date).getTime() + 18 * 3600000, duration: 0, name: l.name, programId: C.id, dayId: l.dayId, exercises: l.exercises.map((e) => ({ exId: e.exId, sets: e.sets.map(([kg, reps]) => ({ kg, reps })) })), prs: [], imported: true });
   });
+  // Séance en cours : applique les nouveaux temps de repos et les exercices remplacés (sans toucher aux séries déjà faites)
+  if (S.live && S.live.programId === C.id) {
+    const dy = prog.days.find((x) => x.id === S.live.dayId);
+    if (dy) S.live.exercises.forEach((e, i) => {
+      let t = dy.exercises.find((x) => x.exId === e.exId);
+      if (!t && !e.sets.some((s) => s.done) && dy.exercises[i] && !S.live.exercises.some((x) => x.exId === dy.exercises[i].exId)) { t = dy.exercises[i]; e.exId = t.exId; e.kg = t.kg || 0; e.note = t.note || ''; }
+      if (t) e.rest = t.rest;
+    });
+  }
   if (first) S.activeProgramId = C.id;
   S.coachVersion = C.version;
   save();
