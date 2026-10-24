@@ -709,38 +709,22 @@ function liveShrink(lv) {
   const root = $('#live');
   if (!lv || reduceMotion()) { ui.liveOpen = false; ui.tab = 'train'; root.hidden = true; root.innerHTML = ''; render(); return; }
   showHomeUnderLive();
-  renderRest();
-  const bar = $('#rest'); bar.classList.remove('enter'); bar.style.opacity = '0';
-  const r = bar.getBoundingClientRect(), W = window.innerWidth, H = window.innerHeight;
-  const cur = lv.style.transform || 'none';
-  lv.classList.remove('enter'); lv.style.transition = 'none'; lv.style.transform = cur; lv.style.borderRadius = '0';
-  lv.style.clipPath = lv.style.webkitClipPath = 'inset(0px 0px 0px 0px round 0px)';
-  lv.getBoundingClientRect();
-  lv.classList.add('morph');
-  const ease = 'cubic-bezier(.32,.72,0,1)';
-  lv.style.transition = `transform .44s ${ease}, clip-path .44s ${ease}, -webkit-clip-path .44s ${ease}, background-color .44s ease`;
-  lv.style.transform = 'none';
-  lv.style.clipPath = lv.style.webkitClipPath = `inset(${r.top}px ${W - r.right}px ${H - r.bottom}px ${r.left}px round ${Math.min(r.height / 2, 30)}px)`;
-  setTimeout(() => {
-    root.hidden = true; root.innerHTML = '';
-    bar.style.transition = 'opacity .16s ease'; bar.style.opacity = '';
-    setTimeout(() => { bar.style.transition = ''; }, 200);
-  }, 430);
+  // L'accueil derrière reprend sa taille pendant que la séance descend (effet « carte » d'iOS)
+  document.body.classList.remove('live-open');
+  lv.classList.remove('enter'); lv.classList.add('dismissing');
+  const from = lv.style.transform || 'translateY(0px)';
+  lv.style.transition = 'none'; lv.style.transform = from; lv.getBoundingClientRect();
+  lv.style.transition = 'transform .5s cubic-bezier(.32,.72,0,1), border-radius .3s ease';
+  lv.style.transform = 'translateY(100%)'; lv.style.borderRadius = '38px 38px 0 0';
+  // La barre « Séance en cours » arrive avec un petit rebond quand la séance est presque en bas
+  setTimeout(() => { renderRest(); const bar = $('#rest'); bar.classList.remove('enter', 'pop'); bar.getBoundingClientRect(); bar.classList.add('pop'); }, 260);
+  setTimeout(() => { root.hidden = true; root.innerHTML = ''; }, 500);
 }
-// Rouvrir depuis la barre : la séance s'agrandit depuis la barre jusqu'au plein écran
-function liveGrowFrom(r) {
-  const lv = $('.live'); if (!lv || !r || reduceMotion()) return;
-  const W = window.innerWidth, H = window.innerHeight, ease = 'cubic-bezier(.32,.72,0,1)';
-  lv.classList.remove('enter'); lv.classList.add('morph');
-  lv.style.transition = 'none';
-  lv.style.clipPath = lv.style.webkitClipPath = `inset(${r.top}px ${W - r.right}px ${H - r.bottom}px ${r.left}px round ${Math.min(r.height / 2, 30)}px)`;
-  lv.getBoundingClientRect();
-  lv.classList.remove('morph');
-  lv.style.transition = `clip-path .46s ${ease}, -webkit-clip-path .46s ${ease}`;
-  lv.style.clipPath = lv.style.webkitClipPath = 'inset(0px 0px 0px 0px round 0px)';
-  setTimeout(() => { lv.style.transition = ''; lv.style.clipPath = lv.style.webkitClipPath = ''; }, 480);
+// Rouvrir depuis la barre : la séance remonte en plein écran, l'accueil recule légèrement derrière
+function liveGrowFrom() {
+  const lv = $('.live'); if (!lv || reduceMotion()) return;
+  lv.classList.add('enter');
 }
-
 // Tirer la séance vers le bas (depuis le haut de la page ou l'en-tête) pour revenir à l'accueil, comme une fenêtre iOS
 (() => {
   let d = null;
@@ -756,13 +740,15 @@ function liveGrowFrom(r) {
     const dy = e.touches[0].clientY - d.y0, dx = e.touches[0].clientX - d.x0;
     if (!d.on) {
       if (dy < 6 || Math.abs(dx) > dy) { if (dy < -4 || Math.abs(dx) > 10) d = null; return; }
-      d.on = true; d.lv.classList.remove('enter'); d.lv.style.transition = 'none';
+      d.on = true; d.lv.classList.remove('enter'); d.lv.style.transition = 'none'; $('#main').style.transition = 'none';
       if (ui.tab !== 'train') { ui.tab = 'train'; lastTab = 'train'; const m = $('#main'); m.innerHTML = views.train(); m.className = 'v-train'; $$('.tabbar button').forEach((b) => b.classList.toggle('on', b.dataset.t === 'train')); placeTabInd(false); } document.activeElement && document.activeElement.blur && document.activeElement.blur();
     }
     e.preventDefault();
     d.dy = Math.max(0, dy);
     const now = performance.now(); d.pts.push([now, d.dy]); while (d.pts.length > 2 && now - d.pts[0][0] > 100) d.pts.shift();
     d.lv.style.transform = `translateY(${d.dy}px)`;
+    const k = Math.min(1, d.dy / window.innerHeight);
+    $('#main').style.transform = `scale(${0.94 + 0.06 * k})`; $('#main').style.opacity = String(0.6 + 0.4 * k);
     d.lv.style.borderRadius = `${Math.min(28, d.dy / 6)}px`;
   }, { passive: false });
   const end = () => {
@@ -772,9 +758,11 @@ function liveGrowFrom(r) {
     const v = a && b && b[0] > a[0] ? (b[1] - a[1]) / (b[0] - a[0]) : 0;
     const H = window.innerHeight, projected = dy + Math.max(0, v) * 220;
     if (projected > H * 0.3 || (v > 0.45 && dy > 24)) {
+      $('#main').style.transition = ''; $('#main').style.transform = ''; $('#main').style.opacity = '';
       liveShrink(lv);
     } else {
       lv.style.transition = 'transform .5s cubic-bezier(.32,.72,0,1), border-radius .5s'; lv.style.transform = ''; lv.style.borderRadius = '';
+      $('#main').style.transition = ''; $('#main').style.transform = ''; $('#main').style.opacity = '';
       setTimeout(() => { lv.style.transition = ''; }, 520);
     }
   };
@@ -784,7 +772,7 @@ function renderLive() {
   const root = $('#live');
   const cur = root.querySelector('.live');
   if (!S.live || !ui.liveOpen) {
-    document.body.style.overflow = '';
+    document.body.style.overflow = ''; document.body.classList.remove('live-open');
     if (cur && !root.hidden && !reduceMotion()) {
       if (!cur.classList.contains('leave')) {
         cur.classList.remove('enter'); cur.classList.add('leave');
@@ -798,7 +786,7 @@ function renderLive() {
   clearTimeout(liveLeaveT);
   const opening = root.hidden || !cur || cur.classList.contains('leave');
   const L = S.live, sc = cur && !opening ? cur.scrollTop : 0;
-  root.hidden = false; document.body.style.overflow = 'hidden';
+  root.hidden = false; document.body.style.overflow = 'hidden'; document.body.classList.add('live-open');
   root.innerHTML = `<div class="live"><div class="live-head"><div class="in">
       <div class="left"><button class="icon-btn hb" data-a="liveMin" aria-label="Réduire la séance">${ICON.down}</button>
       <div class="mid">${(() => { const [a, ...b] = L.name.split(/\s·\s/); return b.length ? `<div class="k">${esc(a)}</div><div class="n">${esc(b.join(' · '))}</div>` : `<div class="n">${esc(L.name)}</div>`; })()}</div>

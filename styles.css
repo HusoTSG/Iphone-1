@@ -967,10 +967,13 @@ button.tour-ok { border: 0; padding: 0; cursor: pointer; }
 .live-head.compact .cap { padding: 0 3px; }
 .live-head.compact .cap button { width: 38px; }
 
-/* Séance qui se rétrécit dans la barre du bas (et s'agrandit depuis elle) */
-.live.morph { background: var(--card) !important; overflow: hidden; }
-.live.morph > * { opacity: 0; transition: opacity .16s ease; }
-.live > * { transition: opacity .22s ease .12s; }
+/* Séance façon carte iOS : l'accueil recule derrière, la séance glisse avec un ressort, la barre arrive avec un rebond */
+#main { transition: transform .5s cubic-bezier(.32,.72,0,1), opacity .5s ease; transform-origin: 50% 0; }
+body.live-open #main { transform: scale(.94); opacity: .6; }
+.live.dismissing { box-shadow: 0 -12px 40px rgba(0,0,0,.35); overflow: hidden; pointer-events: none; }
+.live { border-radius: 0; }
+@keyframes bar-pop { 0% { transform: translateY(30px) scale(.92); opacity: 0; } 60% { transform: translateY(-3px) scale(1.01); opacity: 1; } 100% { transform: none; opacity: 1; } }
+#rest.pop { animation: bar-pop .5s cubic-bezier(.32,.72,0,1) both; }
 /* Accueil : la barre « Séance en cours » ne décale pas les journées (on peut juste défiler un peu) */
 body.has-mini #main.v-train { min-height: calc(var(--screen-h, 100dvh) - env(safe-area-inset-top, 0px) + 78px); }
 .rest .btn.mini-x { width: 36px; padding: 0; justify-content: center; color: var(--red); flex-shrink: 0; }
