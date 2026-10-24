@@ -70,7 +70,7 @@ function defaultState() {
   return { v: 2, settings: { rest: 90, theme: 'auto', bar: 20, iosTimer: false }, programs: [], activeProgramId: null, customExercises: [], sessions: [], live: null, checks: [], coachVersion: 0 };
 }
 let S = defaultState();
-const ui = { tab: 'train', liveOpen: true, chart: 'kg' };
+const ui = { tab: 'train', liveOpen: true, chart: 'kg', range: '3m' };
 
 let saveTimer = null;
 function save(now = false) { pushSync(); clearTimeout(saveTimer); if (now) return Store.set('state', S); saveTimer = setTimeout(() => Store.set('state', S), 250); return Promise.resolve(); }
@@ -251,6 +251,104 @@ function lineChart(pts, unit = '') {
   const lp = pts[pts.length - 1];
   return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Évolution, dernière valeur ${nf(lp.y, 1)} ${unit}">${g}<path class="ar" d="${area}"/><path class="ln" d="${line}"/>${dots}<circle class="end" cx="${sx(lp.x).toFixed(1)}" cy="${sy(lp.y).toFixed(1)}" r="5"/></svg>`;
 }
+// ---------- Courbe façon app Santé ----------
+const RANGES = [['1m', '1M', 30], ['3m', '3M', 91], ['6m', '6M', 182], ['1y', '1A', 365]];
+// Courbe lissée sans dépasser les points (interpolation monotone)
+function smoothPath(P) {
+  if (P.length < 3) return P.map((p, i) => `${i ? 'L' : 'M'}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join('');
+  const n = P.length, d = [], m = [];
+  for (let i = 0; i < n - 1; i++) d.push((P[i + 1][1] - P[i][1]) / (P[i + 1][0] - P[i][0] || 1));
+  m[0] = d[0]; m[n - 1] = d[n - 2];
+  for (let i = 1; i < n - 1; i++) m[i] = d[i - 1] * d[i] <= 0 ? 0 : (d[i - 1] + d[i]) / 2;
+  for (let i = 0; i < n - 1; i++) {
+    if (d[i] === 0) { m[i] = 0; m[i + 1] = 0; continue; }
+    const a = m[i] / d[i], b = m[i + 1] / d[i], s = a * a + b * b;
+    if (s > 9) { const t = 3 / Math.sqrt(s); m[i] = t * a * d[i]; m[i + 1] = t * b * d[i]; }
+  }
+  let out = `M${P[0][0].toFixed(1)},${P[0][1].toFixed(1)}`;
+  for (let i = 0; i < n - 1; i++) {
+    const h = (P[i + 1][0] - P[i][0]) / 3;
+    out += `C${(P[i][0] + h).toFixed(1)},${(P[i][1] + m[i] * h).toFixed(1)} ${(P[i + 1][0] - h).toFixed(1)},${(P[i + 1][1] - m[i + 1] * h).toFixed(1)} ${P[i + 1][0].toFixed(1)},${P[i + 1][1].toFixed(1)}`;
+  }
+  return out;
+}
+const fmtLong = (ms) => new Date(ms).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+function healthChart(all, unit, rangeKey) {
+  const days = (RANGES.find((r) => r[0] === rangeKey) || RANGES[1])[2];
+  const now = parseKey(dkey()).getTime(), DAY = 86400000;
+  const x1 = now + DAY * 0.5, x0 = now - days * DAY;
+  const pts = all.filter((p) => p.x >= x0 - DAY / 2);
+  const dec = 1;
+  const segment = `<div class="segment rng" role="tablist" aria-label="Période">${RANGES.map(([k, n]) => `<button class="${k === rangeKey ? 'on' : ''}" data-a="range" data-v="${k}" role="tab" aria-selected="${k === rangeKey}">${n}</button>`).join('')}</div>`;
+  if (!all.length) return `${segment}<div class="empty">Ajoute ta première mesure pour voir la courbe.</div>`;
+  // En haut : la variation sur la période (la dernière valeur est déjà dans la carte au-dessus)
+  const fmtD = (ms, y) => new Date(ms).toLocaleDateString('fr-FR', y ? { day: 'numeric', month: 'short', year: 'numeric' } : { day: 'numeric', month: 'short' });
+  const ch = pts.length > 1 ? pts[pts.length - 1].y - pts[0].y : null;
+  const head = ch !== null
+    ? { k: 'Variation', v: `${ch > 0 ? '+' : ch < 0 ? '−' : ''}${nf(Math.abs(ch), dec)}`, d: `${fmtD(pts[0].x)} – ${fmtD(pts[pts.length - 1].x, true)}` }
+    : pts.length ? { k: 'Mesure', v: nf(pts[0].y, dec), d: fmtLong(pts[0].x) } : { k: 'Aucune mesure', v: '—', d: 'sur cette période' };
+  const change = '';
+  const W = 340, H = 200, L = 6, R = 40, T = 12, B = 26;
+  let y0 = Math.min(...pts.map((p) => p.y)), y1 = Math.max(...pts.map((p) => p.y));
+  if (!pts.length) { y0 = 0; y1 = 1; }
+  if (y1 - y0 < 1) { const c = (y0 + y1) / 2; y0 = c - 1; y1 = c + 1; }
+  const step = niceStep(y1 - y0, 3); y0 = Math.floor(y0 / step) * step; y1 = Math.ceil(y1 / step) * step;
+  const sx = (x) => L + ((x - x0) / (x1 - x0)) * (W - L - R), sy = (y) => T + (1 - (y - y0) / (y1 - y0)) * (H - T - B);
+  let g = '';
+  for (let v = y0; v <= y1 + step / 2; v += step) g += `<line class="grid" x1="${L}" x2="${W - R}" y1="${sy(v).toFixed(1)}" y2="${sy(v).toFixed(1)}"/><text class="axis" x="${W - R + 6}" y="${(sy(v) + 3.5).toFixed(1)}">${nf(v, step < 1 ? 1 : 0)}</text>`;
+  // Repères de dates : semaines pour 1M, débuts de mois sinon
+  const ticks = [];
+  if (days <= 31) { for (let t = now; t >= x0; t -= 7 * DAY) ticks.push([t, new Date(t).toLocaleDateString('fr-FR', { day: 'numeric' })]); }
+  else {
+    const d = new Date(x0); d.setDate(1); d.setMonth(d.getMonth() + 1);
+    const every = days > 200 ? 2 : 1;
+    for (let i = 0; d.getTime() <= x1; i++, d.setMonth(d.getMonth() + 1)) if (i % every === 0) ticks.push([d.getTime(), d.toLocaleDateString('fr-FR', { month: 'short' }).replace('.', '')]);
+  }
+  ticks.forEach(([t, s]) => { const x = sx(t).toFixed(1); g += `<line class="vgrid" x1="${x}" x2="${x}" y1="${T}" y2="${H - B}"/><text class="axis" x="${x}" y="${H - 8}" text-anchor="middle">${s}</text>`; });
+  const P = pts.map((p) => [sx(p.x), sy(p.y)]);
+  let plot = '';
+  if (P.length) {
+    const line = smoothPath(P);
+    const area = `${line}L${P[P.length - 1][0].toFixed(1)},${H - B}L${P[0][0].toFixed(1)},${H - B}Z`;
+    plot = `<path class="ar" d="${area}" fill="url(#hgrad)"/><path class="ln" d="${line}"/>${P.length <= 26 ? P.map(([x, y]) => `<circle class="pt" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.5"/>`).join('') : ''}`;
+  }
+  const data = JSON.stringify(pts.map((p) => [Math.round(sx(p.x) * 10) / 10, Math.round(sy(p.y) * 10) / 10, p.y, p.x]));
+  return `${segment}
+    <div class="hc-head" data-k="${esc(head.k)}" data-v="${esc(head.v)}" data-d="${esc(head.d)}"><div class="hc-k">${head.k}</div><div class="hc-v"><span>${head.v}</span><small>${unit}</small></div><div class="hc-d">${head.d}</div></div>
+    <div class="hc-wrap" data-pts='${data}' data-unit="${unit}" data-w="${W}" data-h="${H}" data-b="${B}" data-t="${T}">
+      <svg class="chart hc" viewBox="0 0 ${W} ${H}" role="img" aria-label="Courbe ${unit === 'kg' ? 'du poids' : 'du tour de taille'}, dernière valeur ${head.v} ${unit}">
+        <defs><linearGradient id="hgrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--blue);stop-opacity:0.3"/><stop offset="1" style="stop-color:var(--blue);stop-opacity:0"/></linearGradient></defs>
+        ${g}${plot}<line class="scrub" x1="0" x2="0" y1="${T}" y2="${H - B}" visibility="hidden"/><circle class="scrub-dot" r="6" visibility="hidden"/></svg></div>
+    ${change ? `<div class="hc-foot">${change}</div>` : ''}${pts.length === 1 ? '<div class="hc-foot">La courbe se dessine dès la deuxième mesure.</div>' : ''}`;
+}
+// Glisser le doigt sur la courbe : la valeur et la date s'affichent en haut, comme dans Santé
+function hcScrub(wrap, clientX) {
+  const pts = JSON.parse(wrap.dataset.pts || '[]'); if (!pts.length) return;
+  const svg = wrap.querySelector('svg'), r = svg.getBoundingClientRect();
+  const x = ((clientX - r.left) / r.width) * Number(wrap.dataset.w);
+  let best = pts[0]; for (const p of pts) if (Math.abs(p[0] - x) < Math.abs(best[0] - x)) best = p;
+  const ln = svg.querySelector('.scrub'), dot = svg.querySelector('.scrub-dot');
+  ln.setAttribute('x1', best[0]); ln.setAttribute('x2', best[0]); ln.setAttribute('visibility', 'visible');
+  dot.setAttribute('cx', best[0]); dot.setAttribute('cy', best[1]); dot.setAttribute('visibility', 'visible');
+  const head = wrap.parentElement.querySelector('.hc-head');
+  head.classList.add('scrubbing');
+  head.querySelector('.hc-k').textContent = 'Mesure';
+  head.querySelector('.hc-v span').textContent = nf(best[2], 1);
+  head.querySelector('.hc-d').textContent = fmtLong(best[3]);
+}
+function hcEnd(wrap) {
+  const svg = wrap.querySelector('svg');
+  svg.querySelector('.scrub').setAttribute('visibility', 'hidden'); svg.querySelector('.scrub-dot').setAttribute('visibility', 'hidden');
+  const head = wrap.parentElement.querySelector('.hc-head'); head.classList.remove('scrubbing');
+  head.querySelector('.hc-k').textContent = head.dataset.k; head.querySelector('.hc-v span').textContent = head.dataset.v; head.querySelector('.hc-d').textContent = head.dataset.d;
+}
+let hcActive = null;
+document.addEventListener('pointerdown', (e) => { const w = e.target.closest('.hc-wrap'); if (!w) return; hcActive = w; hcScrub(w, e.clientX); });
+document.addEventListener('pointermove', (e) => { const w = e.target.closest('.hc-wrap'); if (hcActive) hcScrub(hcActive, e.clientX); else if (w && e.pointerType === 'mouse') hcScrub(w, e.clientX); });
+document.addEventListener('pointerup', () => { if (hcActive) { hcEnd(hcActive); hcActive = null; } });
+document.addEventListener('pointercancel', () => { if (hcActive) { hcEnd(hcActive); hcActive = null; } });
+document.addEventListener('pointerout', (e) => { const w = e.target.closest && e.target.closest('.hc-wrap'); if (w && e.pointerType === 'mouse' && !w.contains(e.relatedTarget)) hcEnd(w); });
+
 function delta(v, unit) {
   if (!Number.isFinite(v)) return '';
   const cls = Math.abs(v) < 0.05 ? 'flat' : v < 0 ? 'down' : 'up';
@@ -374,7 +472,7 @@ views.track = () => {
   if (W.length > 1) since.push(`${W[W.length - 1].kg - W[0].kg > 0 ? '+' : '−'}${nf1(Math.abs(W[W.length - 1].kg - W[0].kg))} kg`);
   if (T.length > 1) since.push(`${T[T.length - 1].waist - T[0].waist > 0 ? '+' : '−'}${nf1(Math.abs(T[T.length - 1].waist - T[0].waist))} cm`);
   const sel = ui.chart === 'waist' ? T : W;
-  const chart = lineChart(sel.map((c) => ({ x: parseKey(c.date).getTime(), y: c[ui.chart] })), ui.chart === 'kg' ? 'kg' : 'cm');
+  const chart = healthChart(sel.map((c) => ({ x: parseKey(c.date).getTime(), y: c[ui.chart] })), ui.chart === 'kg' ? 'kg' : 'cm', ui.range);
   const rows = cs.slice().reverse().map((c) => {
     const parts = [Number.isFinite(c.kg) ? `${nf1(c.kg)} kg` : '', Number.isFinite(c.waist) ? `${nf1(c.waist)} cm` : ''].filter(Boolean).join(' · ');
     return swipeRow('check', c.id, cell({ a: 'checkEdit', cls: 'swipe-fg', data: `data-id="${c.id}"`, t: fmtShort(c.date), s: `Semaine ${isoWeek(c.date)}`, v: parts }));
@@ -1002,6 +1100,7 @@ const A = {
   sessionDel() { const c = topSheet(); confirmSheet({ title: 'Supprimer cette séance ?', onOk: () => { S.sessions = S.sessions.filter((s) => s.id !== c.sid); save(); closeAllSheets(); render(); } }); },
 
   chart(el) { ui.chart = el.dataset.v; render(); },
+  range(el) { ui.range = el.dataset.v; render(); },
   checkNew() { checkSheet(); },
   checkEdit(el) { checkSheet(el.dataset.id); },
   checkDel() { const c = topSheet(); confirmSheet({ title: 'Supprimer cette mesure ?', onOk: () => { S.checks = S.checks.filter((x) => x.id !== c.id); save(); closeAllSheets(); render(); } }); },

@@ -768,3 +768,23 @@ header.large.train-h .icon-btn { color: var(--label); }
 #hold[data-phase="run"] .hold-msg { color: var(--label-2); }
 .hold-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; }
 .hold-btns .btn { min-height: 52px; font-size: 17px; }
+
+/* Courbe façon app Santé */
+.segment.rng { margin-top: 10px; }
+.hc-head { margin: 14px 2px 6px; }
+.hc-k { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; color: var(--label-2); }
+.hc-v { display: flex; align-items: baseline; gap: 4px; margin-top: 2px; }
+.hc-v span { font-size: 34px; font-weight: 700; letter-spacing: -0.5px; font-variant-numeric: tabular-nums; color: var(--label); }
+.hc-v small { font-size: 17px; font-weight: 600; color: var(--label-2); }
+.hc-d { font-size: 15px; color: var(--label-2); }
+.hc-head.scrubbing .hc-k { color: var(--blue); }
+.hc-wrap { touch-action: pan-y; user-select: none; -webkit-user-select: none; cursor: crosshair; margin: 0 -4px; }
+.chart.hc .grid { stroke: var(--sep); stroke-dasharray: 2 3; }
+.chart.hc .vgrid { stroke: var(--sep); stroke-width: 1; opacity: 0.6; }
+.chart.hc .axis { font-size: 11px; }
+.chart.hc .ar { fill: url(#hgrad); opacity: 1; }
+.chart.hc .ln { stroke-width: 2.5; }
+.chart.hc .pt { fill: var(--blue); stroke: var(--card); stroke-width: 2; }
+.chart.hc .scrub { stroke: var(--label-2); stroke-width: 1.5; }
+.chart.hc .scrub-dot { fill: var(--blue); stroke: var(--card); stroke-width: 3; }
+.hc-foot { margin-top: 8px; font-size: 13px; color: var(--label-2); }
