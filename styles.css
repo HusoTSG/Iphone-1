@@ -948,3 +948,21 @@ button.tour-ok { border: 0; padding: 0; cursor: pointer; }
 .rest .btn.rp { width: 38px; padding: 0; justify-content: center; flex-shrink: 0; }
 .rest.paused .t { opacity: .55; }
 .rest.paused .prog { opacity: .4; }
+
+/* En-tête de séance compact au défilement : le titre s'efface, le chrono glisse au centre */
+.live-head .mid { flex: 1 1 0; transition: opacity .3s ease, transform .35s var(--spring); }
+.live-head .right { flex: 0 1 0; min-width: auto; display: flex; justify-content: flex-end; transition: flex-grow .45s var(--spring); }
+.live-head .icon-btn.hb, .live-head .cap, .live-head .tpill { transition: height .35s var(--spring), width .35s var(--spring), transform .35s var(--spring); }
+.live-head .in { transition: min-height .35s var(--spring); }
+.live-head.compact .mid { opacity: 0; transform: translateY(-6px) scale(.96); pointer-events: none; }
+.live-head.compact .right { flex-grow: 1; }
+.live-head.compact .icon-btn.hb { width: 42px; height: 42px; }
+.live-head.compact .cap { height: 42px; }
+.live-head.compact .cap button { height: 38px; width: 42px; }
+.live-head.compact .tpill { height: 42px; transform: scale(1.04); }
+.live-head.compact .in { min-height: 48px; }
+.live-head .left { flex: 1 1 0; min-width: 0; display: flex; align-items: center; gap: 12px; }
+.live-head .right { flex: 0 0 auto; }
+.live-head.compact .right { flex: 1 1 0; }
+.live-head.compact .cap { padding: 0 3px; }
+.live-head.compact .cap button { width: 38px; }

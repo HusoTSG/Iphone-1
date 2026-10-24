@@ -699,6 +699,11 @@ function exHistSheet(i) {
 }
 
 let liveLeaveT = null;
+// En défilant la séance, l'en-tête se compacte : il ne reste que le chrono au centre (comme les titres Apple)
+document.addEventListener('scroll', (e) => {
+  const lv = e.target; if (!lv.classList || !lv.classList.contains('live')) return;
+  const h = lv.querySelector('.live-head'); if (h) h.classList.toggle('compact', lv.scrollTop > 24);
+}, true);
 // Tirer la séance vers le bas (depuis le haut de la page ou l'en-tête) pour revenir à l'accueil, comme une fenêtre iOS
 (() => {
   let d = null;
@@ -760,14 +765,15 @@ function renderLive() {
   const L = S.live, sc = cur && !opening ? cur.scrollTop : 0;
   root.hidden = false; document.body.style.overflow = 'hidden';
   root.innerHTML = `<div class="live"><div class="live-head"><div class="in">
-      <button class="icon-btn hb" data-a="liveMin" aria-label="Réduire la séance">${ICON.down}</button>
+      <div class="left"><button class="icon-btn hb" data-a="liveMin" aria-label="Réduire la séance">${ICON.down}</button>
       <div class="mid">${(() => { const [a, ...b] = L.name.split(/\s·\s/); return b.length ? `<div class="k">${esc(a)}</div><div class="n">${esc(b.join(' · '))}</div>` : `<div class="n">${esc(L.name)}</div>`; })()}</div>
-      <div class="tpill" aria-label="Durée de la séance">${ICON.stopwatch}<span class="clock" id="clock">${fmtClock((Date.now() - L.startedAt) / 1000)}</span></div>
-      <div class="cap"><button class="quit" data-a="liveCancel" aria-label="Abandonner la séance">${lineIcon('xmark', 22)}</button><button class="done" data-a="liveFinish" aria-label="Terminer la séance">${ICON.check}</button></div></div></div>
+      </div><div class="tpill" aria-label="Durée de la séance">${ICON.stopwatch}<span class="clock" id="clock">${fmtClock((Date.now() - L.startedAt) / 1000)}</span></div>
+      <div class="right"><div class="cap"><button class="quit" data-a="liveCancel" aria-label="Abandonner la séance">${lineIcon('xmark', 22)}</button><button class="done" data-a="liveFinish" aria-label="Terminer la séance">${ICON.check}</button></div></div></div></div>
     <div class="live-body">${groupAbs(L.exercises, liveExCard, liveCircuit) || '<div class="exc"><div class="empty">Ajoute ton premier exercice.</div></div>'}
       <button class="btn filled block" data-a="liveAddEx">Ajouter un exercice</button>
       <button class="btn red block" data-a="liveCancel">Abandonner la séance</button></div></div>`;
   root.querySelector('.live').scrollTop = sc;
+  root.querySelector('.live-head').classList.toggle('compact', sc > 24);
   if (opening && !reduceMotion()) { const lv = root.querySelector('.live'); lv.classList.add('enter'); lv.addEventListener('animationend', () => lv.classList.remove('enter'), { once: true }); }
   renderRest();
 }
@@ -793,7 +799,7 @@ function renderRest() {
     el.className = (mini ? 'rest mini' : 'rest') + (paused ? ' paused' : '') + (appearing && !reduceMotion() ? ' enter' : '');
     const PAUSE = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1.2"/><rect x="14" y="5" width="4" height="14" rx="1.2"/></svg>';
     const PLAY = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg>';
-    const ctrls = `<button class="btn sm rp" data-a="restPause" aria-label="${paused ? 'Reprendre le repos' : 'Mettre le repos en pause'}">${paused ? PLAY : PAUSE}</button><button class="btn sm" data-a="restAdd" data-v="-15">−15</button><button class="btn sm" data-a="restAdd" data-v="15">+15</button><button class="btn sm filled" data-a="restSkip">Passer</button>`;
+    const ctrls = `<button class="btn sm" data-a="restAdd" data-v="-15">−15</button><button class="btn sm" data-a="restAdd" data-v="15">+15</button><button class="btn sm filled" data-a="restSkip">Passer</button>`;
     if (!mini) el.innerHTML = `<div class="prog"></div><div class="in"><div class="grow"><div class="foot">${paused ? 'En pause' : 'Repos'}</div><div class="t" id="restT"></div></div>${ctrls}</div>`;
     else if (resting) el.innerHTML = `<div class="prog"></div><div class="in"><button class="mini-open" data-a="liveOpen" aria-label="Rouvrir la séance"><span class="foot">Repos · ${esc(L.name)}</span><span class="t" id="restT"></span></button>${ctrls}</div>`;
     else el.innerHTML = `<div class="in"><button class="mini-open" data-a="liveOpen" aria-label="Rouvrir la séance"><span class="foot">Séance en cours</span><span class="mn">${esc(L.name)}</span></button><span class="clock" id="miniClock"></span><button class="btn sm filled" data-a="liveOpen">Ouvrir</button></div>`;
@@ -872,7 +878,6 @@ function holdStart(i, jj) {
     <div class="hold-ring"><svg viewBox="0 0 200 200"><circle class="bg" cx="100" cy="100" r="88"/><circle class="fg" cx="100" cy="100" r="88" pathLength="1000"/></svg>
       <div class="hold-mid"><div class="hold-num" aria-live="off"></div><div class="hold-side"></div></div></div>
     <div class="hold-msg" aria-live="assertive"></div>
-    <div class="hold-adj"><button class="btn" data-a="holdAdd" data-v="-5">−5 s</button><button class="btn" data-a="holdSkip">Suivant</button><button class="btn" data-a="holdAdd" data-v="5">+5 s</button></div>
     <div class="hold-btns"><button class="btn" data-a="holdStop">Arrêter</button><button class="btn filled" data-a="holdPause">Pause</button></div></div>`;
   ov.hidden = false;
   requestAnimationFrame(() => ov.classList.add('on'));
