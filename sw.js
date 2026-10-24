@@ -1,5 +1,5 @@
 // Mode hors ligne : garde l'appli en cache. Change VERSION à chaque mise à jour.
-const VERSION = 'husofit-v50';
+const VERSION = 'husofit-v51';
 const SHELL = ['./', 'index.html', 'styles.css', 'data.js', 'app.js', 'manifest.webmanifest', 'icons/apple-touch-icon.png', 'icons/icon-192.png', 'icons/icon-512.png'];
 
 self.addEventListener('install', (e) => {

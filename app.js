@@ -427,7 +427,7 @@ const dayLabel = (d) => {
 const views = {};
 views.train = () => {
   const k = dkey(), prog = activeProgram(), nx = nextWorkout();
-  const live = S.live ? `<div class="card" id="liveBanner"><div class="row"><div class="grow"><div class="overline">Séance en cours</div><h2>${esc(S.live.name)}</h2></div><span class="clock" style="font-size:17px">${fmtClock((Date.now() - S.live.startedAt) / 1000)}</span></div><button class="btn filled block" data-a="liveOpen">Reprendre</button></div>` : '';
+  const live = S.live ? `<div class="card" id="liveBanner"><div class="row"><div class="grow"><div class="overline">Séance en cours</div><h2>${esc(S.live.name)}</h2></div><span class="clock" style="font-size:17px">${fmtClock((Date.now() - S.live.startedAt) / 1000)}</span></div><div class="banner-btns"><button class="btn red" data-a="liveCancel">Abandonner</button><button class="btn filled" data-a="liveOpen">Reprendre</button></div></div>` : '';
   const doneSet = prog ? doneThisWeek(prog) : new Set();
   const days = prog ? prog.days.map((d) => {
     const isNext = nx && !S.live && nx.day.id === d.id, isDone = doneSet.has(d.id);

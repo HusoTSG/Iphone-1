@@ -799,3 +799,7 @@ header.large.train-h .icon-btn { color: var(--label); }
 .abs-group .ex-ic, .abs-group .line-ic { color: var(--abs); }
 .abs-group .exc .ex-ic { background: color-mix(in srgb, var(--abs) 18%, transparent); }
 .day-pills .abs-group { padding: 10px; }
+
+/* Séance en cours sur l'accueil : Abandonner + Reprendre côte à côte */
+.banner-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.banner-btns .btn { min-height: 52px; font-size: 17px; }
