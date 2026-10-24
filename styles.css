@@ -831,3 +831,18 @@ header.large.train-h .icon-btn { color: var(--label); }
 .live-head .cap .done { color: #fff; background: var(--blue); width: 40px; height: 40px; margin-left: 4px; border-radius: 50%; }
 .live-head .cap .done svg { width: 20px; height: 20px; }
 .live-head .cap button:active { opacity: .6; }
+
+/* En-tête séance flottant façon app Claude : pas de bandeau, le contenu passe dessous en fondu, boutons Liquid Glass */
+.live-head { background: linear-gradient(to bottom, var(--bg) 0%, var(--bg) calc(100% - 24px), color-mix(in srgb, var(--bg) 0%, transparent) 100%) !important;
+  border-bottom: 0 !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; padding-bottom: 18px; }
+.live-head .icon-btn.hb, .live-head .cap {
+  background: var(--glass-bg); border: 0.5px solid var(--glass-edge);
+  box-shadow: inset 0 1px 0 var(--glass-hi), inset 0 -1px 0 rgba(255,255,255,0.04), var(--glass-shadow);
+  -webkit-backdrop-filter: blur(24px) saturate(190%); backdrop-filter: blur(24px) saturate(190%); }
+.live-head .icon-btn.hb { color: var(--label); }
+.live-head .cap { padding: 0 4px; gap: 2px; }
+.live-head .cap button { width: 48px; height: 44px; }
+.live-head .cap .done { background: transparent; color: var(--blue); width: 48px; height: 44px; margin: 0; }
+.live-head .cap .done svg { width: 22px; height: 22px; }
+.live-head .mid .n { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.live-body { padding-top: 4px; }
