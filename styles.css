@@ -814,3 +814,7 @@ header.large.train-h .icon-btn { color: var(--label); }
 /* Bouton rond « Abandonner » dans l'en-tête de la séance */
 .icon-btn.quit { color: var(--red); }
 .icon-btn.quit svg { stroke-width: 2.4; }
+
+/* En-tête séance : « Terminer » à la même hauteur que les boutons ronds */
+.live-head .in { align-items: center; }
+.live-head [data-a="liveFinish"] { height: 44px; min-height: 44px; padding: 0 20px; font-size: 17px; display: inline-flex; align-items: center; }
