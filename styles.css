@@ -803,3 +803,10 @@ header.large.train-h .icon-btn { color: var(--label); }
 /* Séance en cours sur l'accueil : Abandonner + Reprendre côte à côte */
 .banner-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .banner-btns .btn { min-height: 52px; font-size: 17px; }
+
+/* Petit rond violet « abdos » à côté du nom de la séance */
+.day-row .dn { display: inline-flex; align-items: center; gap: 10px; }
+.abs-badge { --abs: #bf5af2; width: 26px; height: 26px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+  color: var(--abs); background: color-mix(in srgb, var(--abs) 18%, transparent); border: 1px solid color-mix(in srgb, var(--abs) 35%, transparent); }
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) .abs-badge { --abs: #af52de; } }
+:root[data-theme="light"] .abs-badge { --abs: #af52de; }

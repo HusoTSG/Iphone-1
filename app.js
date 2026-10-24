@@ -421,13 +421,14 @@ const dayLabel = (d) => {
   const parts = d.name.split(/\s·\s/);
   const top = parts.length > 1 ? parts[0] : (d.weekday ? WD_FULL[d.weekday] : '');
   const title = parts.length > 1 ? parts.slice(1).join(' · ') : d.name;
-  return `${top ? `<span class="dk">${esc(top)}</span>` : ''}<span class="dn">${esc(title)}</span>`;
+  const abs = (d.exercises || []).some(isAbs) ? `<span class="abs-badge" title="Avec abdos" aria-label="avec abdos">${lineIcon('abs', 15)}</span>` : '';
+  return `${top ? `<span class="dk">${esc(top)}</span>` : ''}<span class="dn">${esc(title)}${abs}</span>`;
 };
 
 const views = {};
 views.train = () => {
   const k = dkey(), prog = activeProgram(), nx = nextWorkout();
-  const live = S.live ? `<div class="card" id="liveBanner"><div class="row"><div class="grow"><div class="overline">Séance en cours</div><h2>${esc(S.live.name)}</h2></div><span class="clock" style="font-size:17px">${fmtClock((Date.now() - S.live.startedAt) / 1000)}</span></div><div class="banner-btns"><button class="btn red" data-a="liveCancel">Abandonner</button><button class="btn filled" data-a="liveOpen">Reprendre</button></div></div>` : '';
+  const live = S.live ? `<div class="card" id="liveBanner"><div class="row"><div class="grow"><div class="overline">Séance en cours</div><h2>${esc(S.live.name)}</h2></div><span class="clock" style="font-size:17px">${fmtClock((Date.now() - S.live.startedAt) / 1000)}</span></div><div class="banner-btns"><button class="btn filled" data-a="liveOpen">Reprendre</button><button class="btn red" data-a="liveCancel">Abandonner</button></div></div>` : '';
   const doneSet = prog ? doneThisWeek(prog) : new Set();
   const days = prog ? prog.days.map((d) => {
     const isNext = nx && !S.live && nx.day.id === d.id, isDone = doneSet.has(d.id);
