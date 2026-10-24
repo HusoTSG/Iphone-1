@@ -635,12 +635,12 @@ function liveCircuit(idx) {
       const phKg = e.kg ? nf(e.kg, 2) : prev ? nf(prev.kg, 2) : k > 0 ? e.sets[k - 1].kg : '';
       const phR = prev ? prev.reps : k > 0 && e.sets[k - 1].reps !== '' ? e.sets[k - 1].reps : (e.repsT || '');
       const h = holdOf(e);
-      const meta = cleanNote(e.note);
+      const meta = h ? (h.sides > 1 ? 'chaque côté' : '') : cleanNote(e.note);
       html += `<div class="tour-ex"><div class="tour-name"><button class="tn" data-a="exHist" data-e="${i}">${esc(ex.name)}</button>${meta ? `<span class="tm">${esc(meta)}</span>` : ''}${h && !s.done ? `<button class="tour-hold" data-a="holdStart" data-e="${i}" data-s="${k}" aria-label="Lancer le chrono">${ICON.stopwatch}${h.hold} s</button>` : ''}</div>
-        <div class="sets two"><div class="row-wrap ${s.done ? 'done' : ''}">
-          <input type="text" inputmode="numeric" id="ls-${i}-${k}-reps" value="${esc(s.reps)}" placeholder="${esc(phR)}" data-in="liveSet" data-e="${i}" data-s="${k}" data-f="reps" aria-label="Répétitions ${esc(ex.name)} tour ${k + 1}">
-          <input type="text" inputmode="decimal" id="ls-${i}-${k}-kg" value="${esc(s.kg)}" placeholder="${esc(phKg)}" data-in="liveSet" data-e="${i}" data-s="${k}" data-f="kg" aria-label="Charge ${esc(ex.name)} tour ${k + 1}">
-          </div></div></div>`;
+        <div class="uf-row${h ? ' one' : ''}${s.done ? ' done' : ''}">
+          <label class="uf"><input type="text" inputmode="numeric" id="ls-${i}-${k}-reps" value="${esc(s.reps)}" placeholder="${esc(phR)}" data-in="liveSet" data-e="${i}" data-s="${k}" data-f="reps" aria-label="${h ? 'Secondes' : 'Répétitions'} ${esc(ex.name)} tour ${k + 1}"><span class="u">${h ? 's' : 'reps'}</span></label>
+          ${h ? '' : `<label class="uf"><input type="text" inputmode="decimal" id="ls-${i}-${k}-kg" value="${esc(s.kg)}" placeholder="${esc(phKg)}" data-in="liveSet" data-e="${i}" data-s="${k}" data-f="kg" aria-label="Charge ${esc(ex.name)} tour ${k + 1}"><span class="u">kg</span></label>`}
+        </div></div>`;
     });
     html += done
       ? `<button class="btn tour-btn undo" data-a="tourUndo" data-e="${idx[0]}" data-k="${k}">Annuler la validation</button></div>`
