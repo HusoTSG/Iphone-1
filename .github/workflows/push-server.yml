@@ -21,3 +21,12 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: push
           wranglerVersion: "4.20.0"
+      - if: env.READY == 'true'
+        name: Vérifier que le serveur répond
+        run: |
+          sleep 5
+          curl -fsS https://husofit-push.husofit.workers.dev/key
+          echo
+          code=$(curl -s -o /dev/null -w "%{http_code}" -X POST https://husofit-push.husofit.workers.dev/schedule -H 'content-type: application/json' -d '{"sub":{"endpoint":"https://evil.example.com/x","keys":{"p256dh":"a","auth":"b"}},"at":1}')
+          echo "refus d'une fausse adresse : $code"
+          test "$code" = "400"

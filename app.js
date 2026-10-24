@@ -824,7 +824,7 @@ function settingsSheet() {
 
 // ---------- Notifications HusoFit (fin du repos) ----------
 // Un petit serveur (dossier push/) envoie la notif au bon moment, même appli fermée.
-const PUSH_URL = '';
+const PUSH_URL = 'https://husofit-push.husofit.workers.dev';
 let pushAt = null;
 const pushOn = () => !!(PUSH_URL && S.settings.push && S.pushSub);
 function pushPost(path, body) {
