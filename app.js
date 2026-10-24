@@ -451,7 +451,6 @@ views.train = () => {
     return cell({ a: 'dayOpen', cls: `day-row${isNext ? ' next' : isDone ? ' done' : ''}`, data: `data-d="${d.id}"`, badge: dayIcon(d), t: dayLabel(d), v });
   }).join('') : '';
   return `<header class="large train-h"><h1>Entraînement</h1><div class="row" style="gap:10px"><button class="icon-btn" data-a="moreMenu" aria-label="Plus d’options">${ICON.more}</button><button class="icon-btn" data-a="settings" aria-label="Réglages">${ICON.gear}</button></div></header>
-    ${live}
     ${prog ? `<div class="section prog-sec"><div class="week-prog" role="img" aria-label="${doneSet.size} séances sur ${prog.days.length} cette semaine"><div class="wp-top"><span>Cette semaine</span><b>${doneSet.size} sur ${prog.days.length}</b></div><div class="wp-bar">${prog.days.map((d) => `<i class="${doneSet.has(d.id) ? 'on' : nx && nx.day.id === d.id ? 'nx' : ''}"></i>`).join('')}</div></div><div class="day-pills fill">${days}</div></div>` : '<div class="card"><h2>Aucun programme</h2><p class="muted small" style="margin:0">Touche ••• en haut pour créer un programme ou lancer une séance libre.</p></div>'}`;
 };
 
@@ -699,11 +698,49 @@ function exHistSheet(i) {
 }
 
 let liveLeaveT = null;
-// En défilant la séance, l'en-tête se compacte : il ne reste que le chrono au centre (comme les titres Apple)
-document.addEventListener('scroll', (e) => {
-  const lv = e.target; if (!lv.classList || !lv.classList.contains('live')) return;
-  const h = lv.querySelector('.live-head'); if (h) h.classList.toggle('compact', lv.scrollTop > 24);
-}, true);
+// Réduire la séance : elle se rétrécit directement dans la barre « Séance en cours » (comme le mini-lecteur de Musique)
+function showHomeUnderLive() {
+  ui.liveOpen = false; ui.tab = 'train'; lastTab = 'train';
+  const m = $('#main'); m.innerHTML = views.train(); m.className = 'v-train';
+  $$('.tabbar button').forEach((b) => b.classList.toggle('on', b.dataset.t === 'train')); placeTabInd(false);
+  document.body.style.overflow = '';
+}
+function liveShrink(lv) {
+  const root = $('#live');
+  if (!lv || reduceMotion()) { ui.liveOpen = false; ui.tab = 'train'; root.hidden = true; root.innerHTML = ''; render(); return; }
+  showHomeUnderLive();
+  renderRest();
+  const bar = $('#rest'); bar.classList.remove('enter'); bar.style.opacity = '0';
+  const r = bar.getBoundingClientRect(), W = window.innerWidth, H = window.innerHeight;
+  const cur = lv.style.transform || 'none';
+  lv.classList.remove('enter'); lv.style.transition = 'none'; lv.style.transform = cur; lv.style.borderRadius = '0';
+  lv.style.clipPath = lv.style.webkitClipPath = 'inset(0px 0px 0px 0px round 0px)';
+  lv.getBoundingClientRect();
+  lv.classList.add('morph');
+  const ease = 'cubic-bezier(.32,.72,0,1)';
+  lv.style.transition = `transform .44s ${ease}, clip-path .44s ${ease}, -webkit-clip-path .44s ${ease}, background-color .44s ease`;
+  lv.style.transform = 'none';
+  lv.style.clipPath = lv.style.webkitClipPath = `inset(${r.top}px ${W - r.right}px ${H - r.bottom}px ${r.left}px round ${Math.min(r.height / 2, 30)}px)`;
+  setTimeout(() => {
+    root.hidden = true; root.innerHTML = '';
+    bar.style.transition = 'opacity .16s ease'; bar.style.opacity = '';
+    setTimeout(() => { bar.style.transition = ''; }, 200);
+  }, 430);
+}
+// Rouvrir depuis la barre : la séance s'agrandit depuis la barre jusqu'au plein écran
+function liveGrowFrom(r) {
+  const lv = $('.live'); if (!lv || !r || reduceMotion()) return;
+  const W = window.innerWidth, H = window.innerHeight, ease = 'cubic-bezier(.32,.72,0,1)';
+  lv.classList.remove('enter'); lv.classList.add('morph');
+  lv.style.transition = 'none';
+  lv.style.clipPath = lv.style.webkitClipPath = `inset(${r.top}px ${W - r.right}px ${H - r.bottom}px ${r.left}px round ${Math.min(r.height / 2, 30)}px)`;
+  lv.getBoundingClientRect();
+  lv.classList.remove('morph');
+  lv.style.transition = `clip-path .46s ${ease}, -webkit-clip-path .46s ${ease}`;
+  lv.style.clipPath = lv.style.webkitClipPath = 'inset(0px 0px 0px 0px round 0px)';
+  setTimeout(() => { lv.style.transition = ''; lv.style.clipPath = lv.style.webkitClipPath = ''; }, 480);
+}
+
 // Tirer la séance vers le bas (depuis le haut de la page ou l'en-tête) pour revenir à l'accueil, comme une fenêtre iOS
 (() => {
   let d = null;
@@ -735,9 +772,7 @@ document.addEventListener('scroll', (e) => {
     const v = a && b && b[0] > a[0] ? (b[1] - a[1]) / (b[0] - a[0]) : 0;
     const H = window.innerHeight, projected = dy + Math.max(0, v) * 220;
     if (projected > H * 0.3 || (v > 0.45 && dy > 24)) {
-      const ms = Math.round(clamp((H - dy) / Math.max(v, 1.6), 160, 340));
-      lv.style.transition = `transform ${ms}ms cubic-bezier(.2,.75,.35,1)`; lv.style.transform = 'translateY(100%)';
-      setTimeout(() => { const root = $('#live'); root.hidden = true; root.innerHTML = ''; ui.liveOpen = false; ui.tab = 'train'; render(); }, ms);
+      liveShrink(lv);
     } else {
       lv.style.transition = 'transform .5s cubic-bezier(.32,.72,0,1), border-radius .5s'; lv.style.transform = ''; lv.style.borderRadius = '';
       setTimeout(() => { lv.style.transition = ''; }, 520);
@@ -773,7 +808,6 @@ function renderLive() {
       <button class="btn filled block" data-a="liveAddEx">Ajouter un exercice</button>
       <button class="btn red block" data-a="liveCancel">Abandonner la séance</button></div></div>`;
   root.querySelector('.live').scrollTop = sc;
-  root.querySelector('.live-head').classList.toggle('compact', sc > 24);
   if (opening && !reduceMotion()) { const lv = root.querySelector('.live'); lv.classList.add('enter'); lv.addEventListener('animationend', () => lv.classList.remove('enter'), { once: true }); }
   renderRest();
 }
@@ -802,7 +836,7 @@ function renderRest() {
     const ctrls = `<button class="btn sm" data-a="restAdd" data-v="-15">−15</button><button class="btn sm" data-a="restAdd" data-v="15">+15</button><button class="btn sm filled" data-a="restSkip">Passer</button>`;
     if (!mini) el.innerHTML = `<div class="prog"></div><div class="in"><div class="grow"><div class="foot">${paused ? 'En pause' : 'Repos'}</div><div class="t" id="restT"></div></div>${ctrls}</div>`;
     else if (resting) el.innerHTML = `<div class="prog"></div><div class="in"><button class="mini-open" data-a="liveOpen" aria-label="Rouvrir la séance"><span class="foot">Repos · ${esc(L.name)}</span><span class="t" id="restT"></span></button>${ctrls}</div>`;
-    else el.innerHTML = `<div class="in"><button class="mini-open" data-a="liveOpen" aria-label="Rouvrir la séance"><span class="foot">Séance en cours</span><span class="mn">${esc(L.name)}</span></button><span class="clock" id="miniClock"></span><button class="btn sm filled" data-a="liveOpen">Ouvrir</button></div>`;
+    else el.innerHTML = `<div class="in"><button class="mini-open" data-a="liveOpen" aria-label="Rouvrir la séance"><span class="foot">Séance en cours</span><span class="mn">${esc(L.name)}</span></button><span class="clock" id="miniClock"></span><button class="btn sm mini-x" data-a="liveCancel" aria-label="Abandonner la séance">${lineIcon('xmark', 18)}</button><button class="btn sm filled" data-a="liveOpen">Ouvrir</button></div>`;
   }
   el.hidden = false;
   document.body.classList.toggle('has-mini', mini);
@@ -1197,8 +1231,12 @@ const A = {
 
   startWorkout(el) { unlockAudio(); startWorkout(el.dataset.p, el.dataset.d); },
   startFree() { unlockAudio(); startWorkout(null, null); },
-  liveOpen() { ui.liveOpen = true; render(); wakeLock(); },
-  liveMin() { ui.liveOpen = false; ui.tab = 'train'; render(); },
+  liveOpen() {
+    const bar = $('#rest'), r = bar && !bar.hidden && bar.classList.contains('mini') ? bar.getBoundingClientRect() : null;
+    ui.liveOpen = true; render(); wakeLock();
+    if (r) liveGrowFrom(r);
+  },
+  liveMin() { liveShrink($('.live')); },
   liveToggle(el) {
     unlockAudio();
     const L = S.live, e = L.exercises[+el.dataset.e], j = +el.dataset.s, s = e.sets[j];

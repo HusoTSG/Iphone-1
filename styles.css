@@ -966,3 +966,11 @@ button.tour-ok { border: 0; padding: 0; cursor: pointer; }
 .live-head.compact .right { flex: 1 1 0; }
 .live-head.compact .cap { padding: 0 3px; }
 .live-head.compact .cap button { width: 38px; }
+
+/* Séance qui se rétrécit dans la barre du bas (et s'agrandit depuis elle) */
+.live.morph { background: var(--card) !important; overflow: hidden; }
+.live.morph > * { opacity: 0; transition: opacity .16s ease; }
+.live > * { transition: opacity .22s ease .12s; }
+/* Accueil : la barre « Séance en cours » ne décale pas les journées (on peut juste défiler un peu) */
+body.has-mini #main.v-train { min-height: calc(var(--screen-h, 100dvh) - env(safe-area-inset-top, 0px) + 78px); }
+.rest .btn.mini-x { width: 36px; padding: 0; justify-content: center; color: var(--red); flex-shrink: 0; }
