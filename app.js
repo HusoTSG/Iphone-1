@@ -637,12 +637,14 @@ function liveCircuit(idx) {
       const h = holdOf(e);
       const meta = cleanNote(e.note);
       html += `<div class="tour-ex"><div class="tour-name"><button class="tn" data-a="exHist" data-e="${i}">${esc(ex.name)}</button>${meta ? `<span class="tm">${esc(meta)}</span>` : ''}${h && !s.done ? `<button class="tour-hold" data-a="holdStart" data-e="${i}" data-s="${k}" aria-label="Lancer le chrono">${ICON.stopwatch}${h.hold} s</button>` : ''}</div>
-        <div class="sets"><div class="row-wrap ${s.done ? 'done' : ''}">
+        <div class="sets two"><div class="row-wrap ${s.done ? 'done' : ''}">
           <input type="text" inputmode="numeric" id="ls-${i}-${k}-reps" value="${esc(s.reps)}" placeholder="${esc(phR)}" data-in="liveSet" data-e="${i}" data-s="${k}" data-f="reps" aria-label="Répétitions ${esc(ex.name)} tour ${k + 1}">
           <input type="text" inputmode="decimal" id="ls-${i}-${k}-kg" value="${esc(s.kg)}" placeholder="${esc(phKg)}" data-in="liveSet" data-e="${i}" data-s="${k}" data-f="kg" aria-label="Charge ${esc(ex.name)} tour ${k + 1}">
-          <button class="tick ${s.done ? 'on' : ''}" data-a="liveToggle" data-e="${i}" data-s="${k}" aria-label="Valider ${esc(ex.name)} tour ${k + 1}">${ICON.check}</button></div></div></div>`;
+          </div></div></div>`;
     });
-    html += '</div>';
+    html += done
+      ? `<button class="btn tour-btn undo" data-a="tourUndo" data-e="${idx[0]}" data-k="${k}">Annuler la validation</button></div>`
+      : `<button class="btn filled tour-btn" data-a="tourDone" data-e="${idx[0]}" data-k="${k}">${ICON.check}Valider le tour ${k + 1}</button></div>`;
   }
   return `<div class="circuit">${html}<button class="link small" data-a="tourAdd" data-e="${idx[0]}" style="align-self:flex-start;padding:0 4px">+ Ajouter un tour</button></div>`;
 }
@@ -1115,6 +1117,25 @@ const A = {
     if (!tourLeft && S.settings.iosTimer) runIosTimer(e.rest);
   },
   holdStart(el) { holdStart(+el.dataset.e, el.dataset.s != null ? +el.dataset.s : undefined); },
+  // Valide les 3 exercices du tour d'un coup, puis lance le repos
+  tourDone(el) {
+    unlockAudio();
+    const L = S.live, k = +el.dataset.k, c = absCircuitOf(+el.dataset.e) || [+el.dataset.e];
+    for (const i of c) {
+      const e = L.exercises[i], s = e.sets[k]; if (!s || s.done) continue;
+      const prev = (lastSetsFor(e.exId) || [])[k];
+      if (s.kg === '') s.kg = e.kg ? nf(e.kg, 2) : prev ? nf(prev.kg, 2) : k > 0 ? e.sets[k - 1].kg : '';
+      if (s.reps === '') s.reps = prev ? String(prev.reps) : k > 0 && e.sets[k - 1].reps !== '' ? e.sets[k - 1].reps : (e.repsT || '');
+      if (!(num(s.reps) > 0)) { s.reps = ''; save(); renderLive(); toast(`Indique les reps de ${exById(e.exId).name}`); const f = $(`#ls-${i}-${k}-reps`); if (f) f.focus(); return; }
+      if (s.kg === '') s.kg = '0';
+    }
+    c.forEach((i) => { const s = L.exercises[i].sets[k]; if (s) s.done = true; });
+    const e = L.exercises[c[c.length - 1]];
+    L.restTotal = e.rest; L.restEnd = Date.now() + e.rest * 1000;
+    save(); renderLive();
+    if (S.settings.iosTimer) runIosTimer(e.rest);
+  },
+  tourUndo(el) { const k = +el.dataset.k; (absCircuitOf(+el.dataset.e) || []).forEach((i) => { const s = S.live.exercises[i].sets[k]; if (s) s.done = false; }); if (ui.tourOpen) delete ui.tourOpen[`${el.dataset.e}-${k}`]; save(); renderLive(); },
   tourOpen(el) { ui.tourOpen = ui.tourOpen || {}; ui.tourOpen[el.dataset.k] = !ui.tourOpen[el.dataset.k]; renderLive(); },
   tourAdd(el) { const c = absCircuitOf(+el.dataset.e) || [+el.dataset.e]; c.forEach((i) => S.live.exercises[i].sets.push({ kg: '', reps: '', done: false })); save(); renderLive(); },
   holdStop() { holdClose(); },

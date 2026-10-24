@@ -881,3 +881,7 @@ header.large.train-h .icon-btn { color: var(--label); }
 .tour.folded .tour-h { flex-shrink: 0; }
 .tour-sum { flex: 1; font-size: 14px; color: var(--label-2); }
 button.tour-ok { border: 0; padding: 0; cursor: pointer; }
+.sets.two { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.btn.tour-btn { gap: 8px; min-height: 48px; font-size: 16px; margin-top: 2px; }
+.btn.tour-btn svg { width: 18px; height: 18px; }
+.btn.tour-btn.undo { color: var(--label-2); font-weight: 500; min-height: 40px; }
