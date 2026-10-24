@@ -815,11 +815,19 @@ header.large.train-h .icon-btn { color: var(--label); }
 .icon-btn.quit { color: var(--red); }
 .icon-btn.quit svg { stroke-width: 2.4; }
 
-/* En-tête séance façon Apple : boutons ronds et « Terminer » de la même hauteur, chrono en pilule */
-.live-head .in { align-items: center; }
-.live-head .icon-btn { width: 38px; height: 38px; }
-.live-head .icon-btn svg { width: 19px; height: 19px; }
-.live-head [data-a="liveFinish"] { height: 38px; min-height: 38px; padding: 0 16px; font-size: 16px; display: inline-flex; align-items: center; }
-.live-head .mid { display: flex; flex-direction: column; align-items: center; gap: 3px; }
-.live-head .mid .clock { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 999px; font-size: 13px; font-weight: 600;
-  font-variant-numeric: tabular-nums; color: var(--label); background: var(--glass-bg); border: 1px solid var(--glass-edge); box-shadow: inset 0 1px 0 var(--glass-hi); }
+/* En-tête séance façon iOS 26 : rond à gauche, titre + chrono, capsule à droite (abandonner / terminer) */
+.live-head .in { display: flex; align-items: center; gap: 12px; min-height: 56px; }
+.live-head .icon-btn.hb { width: 48px; height: 48px; flex-shrink: 0; }
+.live-head .icon-btn.hb svg { width: 22px; height: 22px; }
+.live-head .mid { flex: 1; min-width: 0; text-align: left; display: block; }
+.live-head .mid .n { font-size: 19px; font-weight: 700; line-height: 1.2; }
+.live-head .mid .clock { font-size: 15px; font-weight: 500; color: var(--label-2); font-variant-numeric: tabular-nums; }
+.live-head .cap { display: flex; align-items: center; height: 48px; padding: 0 6px; border-radius: 999px; flex-shrink: 0;
+  background: var(--glass-bg); border: 1px solid var(--glass-edge); box-shadow: inset 0 1px 0 var(--glass-hi), var(--glass-shadow);
+  -webkit-backdrop-filter: blur(20px) saturate(180%); backdrop-filter: blur(20px) saturate(180%); }
+.live-head .cap button { width: 44px; height: 40px; border: 0; background: transparent; display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; padding: 0; }
+.live-head .cap .quit { color: var(--red); }
+.live-head .cap .quit svg { stroke-width: 2.3; }
+.live-head .cap .done { color: #fff; background: var(--blue); width: 40px; height: 40px; margin-left: 4px; border-radius: 50%; }
+.live-head .cap .done svg { width: 20px; height: 20px; }
+.live-head .cap button:active { opacity: .6; }

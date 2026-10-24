@@ -641,9 +641,9 @@ function renderLive() {
   const L = S.live, sc = root.querySelector('.live') ? root.querySelector('.live').scrollTop : 0;
   root.hidden = false; document.body.style.overflow = 'hidden';
   root.innerHTML = `<div class="live"><div class="live-head"><div class="in">
-      <div class="row" style="gap:10px"><button class="icon-btn" data-a="liveMin" aria-label="Réduire la séance">${ICON.down}</button><button class="icon-btn quit" data-a="liveCancel" aria-label="Abandonner la séance">${lineIcon('xmark', 20)}</button></div>
+      <button class="icon-btn hb" data-a="liveMin" aria-label="Réduire la séance">${ICON.down}</button>
       <div class="mid"><div class="n">${esc(L.name)}</div><div class="clock" id="clock">${fmtClock((Date.now() - L.startedAt) / 1000)}</div></div>
-      <div style="justify-self:end"><button class="btn filled sm" data-a="liveFinish">Terminer</button></div></div></div>
+      <div class="cap"><button class="quit" data-a="liveCancel" aria-label="Abandonner la séance">${lineIcon('xmark', 22)}</button><button class="done" data-a="liveFinish" aria-label="Terminer la séance">${ICON.check}</button></div></div></div>
     <div class="live-body">${groupAbs(L.exercises, liveExCard) || '<div class="exc"><div class="empty">Ajoute ton premier exercice.</div></div>'}
       <button class="btn filled block" data-a="liveAddEx">Ajouter un exercice</button>
       <button class="btn red block" data-a="liveCancel">Abandonner la séance</button></div></div>`;
