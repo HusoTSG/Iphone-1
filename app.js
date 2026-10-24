@@ -597,12 +597,54 @@ async function wakeLock() { try { if ('wakeLock' in navigator && !wl) { wl = awa
 const cleanNote = (n) => String(n || '').replace(/^\s*1-2 RIR\s*(·\s*)?/i, '').replace(/^\s*Abdos\s*(·\s*)?/i, '').trim();
 // Les exercices d'abdos qui se suivent sont regroupés dans une case « Abdos » d'une autre couleur
 const isAbs = (e) => /^\s*abdos/i.test(e.note || '');
-function groupAbs(list, one) {
-  let out = '', buf = '';
-  const flush = () => { if (buf) { out += `<div class="abs-group"><div class="abs-h">${lineIcon('abs', 18)}Abdos</div>${buf}</div>`; buf = ''; } };
-  list.forEach((e, i) => { if (isAbs(e)) buf += one(e, i); else { flush(); out += one(e, i); } });
+function groupAbs(list, one, many = null) {
+  let out = '', buf = '', idx = [];
+  const flush = () => {
+    if (idx.length) out += `<div class="abs-group"><div class="abs-h">${lineIcon('abs', 18)}Abdos${many && idx.length > 1 ? '<span class="abs-sub">en circuit</span>' : ''}</div>${many && idx.length > 1 ? many(idx) : buf}</div>`;
+    buf = ''; idx = [];
+  };
+  list.forEach((e, i) => { if (isAbs(e)) { buf += one(e, i); idx.push(i); } else { flush(); out += one(e, i); } });
   flush();
   return out;
+}
+// Circuit d'abdos : les exercices d'abdos qui se suivent dans la séance
+function absCircuitOf(i) {
+  const X = S.live.exercises; if (!X[i] || !isAbs(X[i])) return null;
+  let a = i, b = i;
+  while (a > 0 && isAbs(X[a - 1])) a--;
+  while (b < X.length - 1 && isAbs(X[b + 1])) b++;
+  return b > a ? Array.from({ length: b - a + 1 }, (_, k) => a + k) : null;
+}
+// Affichage par tours : Tour 1 = série 1 de chaque exercice, sans repos entre eux
+function liveCircuit(idx) {
+  const X = S.live.exercises;
+  const tours = Math.max(...idx.map((i) => X[i].sets.length));
+  let html = '';
+  for (let k = 0; k < tours; k++) {
+    const members = idx.filter((i) => X[i].sets[k]);
+    const done = members.every((i) => X[i].sets[k].done);
+    const cur = !done && members.some((i) => X[i].sets[k].done) || (!done && (k === 0 || idx.every((i) => !X[i].sets[k - 1] || X[i].sets[k - 1].done)));
+    const tkey = `${idx[0]}-${k}`;
+    if (done && !(ui.tourOpen && ui.tourOpen[tkey])) {
+      html += `<button class="tour folded" data-a="tourOpen" data-k="${tkey}"><span class="tour-h"><span>Tour ${k + 1}</span></span><span class="tour-sum">${members.length} exercices faits</span><span class="tour-ok">${ICON.check}</span></button>`;
+      continue;
+    }
+    html += `<div class="tour${done ? ' done' : ''}${cur ? ' cur' : ''}"><div class="tour-h"><span>Tour ${k + 1}</span>${done ? `<button class="tour-ok" data-a="tourOpen" data-k="${tkey}" aria-label="Replier">${ICON.check}</button>` : ''}</div>`;
+    members.forEach((i) => {
+      const e = X[i], ex = exById(e.exId), s = e.sets[k], prev = (lastSetsFor(e.exId) || [])[k];
+      const phKg = e.kg ? nf(e.kg, 2) : prev ? nf(prev.kg, 2) : k > 0 ? e.sets[k - 1].kg : '';
+      const phR = prev ? prev.reps : k > 0 && e.sets[k - 1].reps !== '' ? e.sets[k - 1].reps : (e.repsT || '');
+      const h = holdOf(e);
+      const meta = cleanNote(e.note);
+      html += `<div class="tour-ex"><div class="tour-name"><button class="tn" data-a="exHist" data-e="${i}">${esc(ex.name)}</button>${meta ? `<span class="tm">${esc(meta)}</span>` : ''}${h && !s.done ? `<button class="tour-hold" data-a="holdStart" data-e="${i}" data-s="${k}" aria-label="Lancer le chrono">${ICON.stopwatch}${h.hold} s</button>` : ''}</div>
+        <div class="sets"><div class="row-wrap ${s.done ? 'done' : ''}">
+          <input type="text" inputmode="numeric" id="ls-${i}-${k}-reps" value="${esc(s.reps)}" placeholder="${esc(phR)}" data-in="liveSet" data-e="${i}" data-s="${k}" data-f="reps" aria-label="Répétitions ${esc(ex.name)} tour ${k + 1}">
+          <input type="text" inputmode="decimal" id="ls-${i}-${k}-kg" value="${esc(s.kg)}" placeholder="${esc(phKg)}" data-in="liveSet" data-e="${i}" data-s="${k}" data-f="kg" aria-label="Charge ${esc(ex.name)} tour ${k + 1}">
+          <button class="tick ${s.done ? 'on' : ''}" data-a="liveToggle" data-e="${i}" data-s="${k}" aria-label="Valider ${esc(ex.name)} tour ${k + 1}">${ICON.check}</button></div></div></div>`;
+    });
+    html += '</div>';
+  }
+  return `<div class="circuit">${html}<button class="link small" data-a="tourAdd" data-e="${idx[0]}" style="align-self:flex-start;padding:0 4px">+ Ajouter un tour</button></div>`;
 }
 function liveExCard(e, i) {
   const ex = exById(e.exId), prev = lastSetsFor(e.exId) || [];
@@ -654,7 +696,7 @@ function renderLive() {
       <div class="mid">${(() => { const [a, ...b] = L.name.split(/\s·\s/); return b.length ? `<div class="k">${esc(a)}</div><div class="n">${esc(b.join(' · '))}</div>` : `<div class="n">${esc(L.name)}</div>`; })()}</div>
       <div class="tpill" aria-label="Durée de la séance">${ICON.stopwatch}<span class="clock" id="clock">${fmtClock((Date.now() - L.startedAt) / 1000)}</span></div>
       <div class="cap"><button class="quit" data-a="liveCancel" aria-label="Abandonner la séance">${lineIcon('xmark', 22)}</button><button class="done" data-a="liveFinish" aria-label="Terminer la séance">${ICON.check}</button></div></div></div>
-    <div class="live-body">${groupAbs(L.exercises, liveExCard) || '<div class="exc"><div class="empty">Ajoute ton premier exercice.</div></div>'}
+    <div class="live-body">${groupAbs(L.exercises, liveExCard, liveCircuit) || '<div class="exc"><div class="empty">Ajoute ton premier exercice.</div></div>'}
       <button class="btn filled block" data-a="liveAddEx">Ajouter un exercice</button>
       <button class="btn red block" data-a="liveCancel">Abandonner la séance</button></div></div>`;
   root.querySelector('.live').scrollTop = sc;
@@ -717,9 +759,9 @@ let hold = null, holdTick = null;
 function speak(txt) {
   try { const u = new SpeechSynthesisUtterance(txt); u.lang = 'fr-FR'; u.rate = 1.05; speechSynthesis.cancel(); speechSynthesis.speak(u); } catch (e) { /* rien */ }
 }
-function holdStart(i) {
+function holdStart(i, jj) {
   const e = S.live.exercises[i], h = holdOf(e); if (!h) return;
-  const j = e.sets.findIndex((s) => !s.done); if (j < 0) return;
+  const j = jj != null && e.sets[jj] && !e.sets[jj].done ? jj : e.sets.findIndex((s) => !s.done); if (j < 0) return;
   unlockAudio();
   if (S.live.restEnd) { S.live.restEnd = null; save(); renderRest(); }
   hold = { i, j, side: 1, sides: h.sides, dur: h.hold, phase: 'run', end: Date.now() + h.hold * 1000, left: 0 };
@@ -1062,12 +1104,19 @@ const A = {
     if (s.reps === '') s.reps = prev ? String(prev.reps) : j > 0 && e.sets[j - 1].reps !== '' ? e.sets[j - 1].reps : (e.repsT || '');
     if (!(num(s.reps) > 0)) { s.reps = ''; toast('Indique le nombre de répétitions'); const i = $(`#ls-${el.dataset.e}-${j}-reps`); if (i) i.focus(); return; }
     if (s.kg === '') s.kg = '0';
-    s.done = true; L.restTotal = e.rest; L.restEnd = Date.now() + e.rest * 1000;
-    if (e.sets.every((x) => x.done)) e.collapsed = true;
+    s.done = true;
+    // En circuit : pas de repos entre les exercices d'un même tour, le repos part à la fin du tour
+    const circ = absCircuitOf(+el.dataset.e);
+    const tourLeft = circ && circ.some((i) => L.exercises[i].sets[j] && !L.exercises[i].sets[j].done);
+    if (tourLeft) { L.restEnd = null; }
+    else { L.restTotal = e.rest; L.restEnd = Date.now() + e.rest * 1000; }
+    if (!circ && e.sets.every((x) => x.done)) e.collapsed = true;
     save(); renderLive();
-    if (S.settings.iosTimer) runIosTimer(e.rest);
+    if (!tourLeft && S.settings.iosTimer) runIosTimer(e.rest);
   },
-  holdStart(el) { holdStart(+el.dataset.e); },
+  holdStart(el) { holdStart(+el.dataset.e, el.dataset.s != null ? +el.dataset.s : undefined); },
+  tourOpen(el) { ui.tourOpen = ui.tourOpen || {}; ui.tourOpen[el.dataset.k] = !ui.tourOpen[el.dataset.k]; renderLive(); },
+  tourAdd(el) { const c = absCircuitOf(+el.dataset.e) || [+el.dataset.e]; c.forEach((i) => S.live.exercises[i].sets.push({ kg: '', reps: '', done: false })); save(); renderLive(); },
   holdStop() { holdClose(); },
   holdPause() {
     if (!hold) return;
