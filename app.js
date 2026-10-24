@@ -584,7 +584,16 @@ function startWorkout(progId, dayId) {
 let wl = null;
 async function wakeLock() { try { if ('wakeLock' in navigator && !wl) { wl = await navigator.wakeLock.request('screen'); wl.addEventListener('release', () => { wl = null; }); } } catch (e) { wl = null; } }
 
-const cleanNote = (n) => String(n || '').replace(/^\s*1-2 RIR\s*(·\s*)?/i, '').trim();
+const cleanNote = (n) => String(n || '').replace(/^\s*1-2 RIR\s*(·\s*)?/i, '').replace(/^\s*Abdos\s*(·\s*)?/i, '').trim();
+// Les exercices d'abdos qui se suivent sont regroupés dans une case « Abdos » d'une autre couleur
+const isAbs = (e) => /^\s*abdos/i.test(e.note || '');
+function groupAbs(list, one) {
+  let out = '', buf = '';
+  const flush = () => { if (buf) { out += `<div class="abs-group"><div class="abs-h">${lineIcon('abs', 18)}Abdos</div>${buf}</div>`; buf = ''; } };
+  list.forEach((e, i) => { if (isAbs(e)) buf += one(e, i); else { flush(); out += one(e, i); } });
+  flush();
+  return out;
+}
 function liveExCard(e, i) {
   const ex = exById(e.exId), prev = lastSetsFor(e.exId) || [];
   const done = e.sets.filter((s) => s.done).length, allDone = done === e.sets.length && done > 0;
@@ -634,7 +643,7 @@ function renderLive() {
       <div><button class="icon-btn" data-a="liveMin" aria-label="Réduire la séance">${ICON.down}</button></div>
       <div class="mid"><div class="n">${esc(L.name)}</div><div class="clock" id="clock">${fmtClock((Date.now() - L.startedAt) / 1000)}</div></div>
       <div style="justify-self:end"><button class="btn filled sm" data-a="liveFinish">Terminer</button></div></div></div>
-    <div class="live-body">${L.exercises.map(liveExCard).join('') || '<div class="exc"><div class="empty">Ajoute ton premier exercice.</div></div>'}
+    <div class="live-body">${groupAbs(L.exercises, liveExCard) || '<div class="exc"><div class="empty">Ajoute ton premier exercice.</div></div>'}
       <button class="btn filled block" data-a="liveAddEx">Ajouter un exercice</button>
       <button class="btn red block" data-a="liveCancel">Abandonner la séance</button></div></div>`;
   root.querySelector('.live').scrollTop = sc;
@@ -692,7 +701,7 @@ function holdOf(e) {
   }
   return h ? { hold: h, sides: sides || 1 } : null;
 }
-const SWITCH_SEC = 3;
+const SWITCH_SEC = 5;
 let hold = null, holdTick = null;
 function speak(txt) {
   try { const u = new SpeechSynthesisUtterance(txt); u.lang = 'fr-FR'; u.rate = 1.05; speechSynthesis.cancel(); speechSynthesis.speak(u); } catch (e) { /* rien */ }
@@ -843,7 +852,7 @@ function daySheet(dayId) {
     render() {
       const dy = this.dy; if (!dy) return sheetHead('');
       return `${sheetHead(esc(dy.name), '<button class="link b" data-a="dayEdit">Modifier</button>')}
-        <div class="day-pills">${dy.exercises.map((e) => `<div class="cell day-row ex-row">${exIcon(exById(e.exId))}<span class="main"><span class="t">${esc(exById(e.exId).name)}</span></span></div>`).join('') || '<div class="empty">Aucun exercice.</div>'}</div>
+        <div class="day-pills">${groupAbs(dy.exercises, (e) => `<div class="cell day-row ex-row">${exIcon(exById(e.exId))}<span class="main"><span class="t">${esc(exById(e.exId).name)}</span></span></div>`) || '<div class="empty">Aucun exercice.</div>'}</div>
         <button class="btn filled block" data-a="startWorkout" data-p="${activeProgram().id}" data-d="${dy.id}">${ICON.play} Commencer</button>`;
     },
   });
