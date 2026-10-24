@@ -810,3 +810,7 @@ header.large.train-h .icon-btn { color: var(--label); }
   color: var(--abs); background: color-mix(in srgb, var(--abs) 18%, transparent); border: 1px solid color-mix(in srgb, var(--abs) 35%, transparent); }
 @media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) .abs-badge { --abs: #af52de; } }
 :root[data-theme="light"] .abs-badge { --abs: #af52de; }
+
+/* Bouton rond « Abandonner » dans l'en-tête de la séance */
+.icon-btn.quit { color: var(--red); }
+.icon-btn.quit svg { stroke-width: 2.4; }
