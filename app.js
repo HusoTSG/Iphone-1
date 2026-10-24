@@ -699,6 +699,42 @@ function exHistSheet(i) {
 }
 
 let liveLeaveT = null;
+// Tirer la séance vers le bas (depuis le haut de la page ou l'en-tête) pour revenir à l'accueil, comme une fenêtre iOS
+(() => {
+  let d = null;
+  document.addEventListener('touchstart', (e) => {
+    const lv = e.target.closest && e.target.closest('.live');
+    if (!lv || lv.classList.contains('leave') || e.touches.length !== 1 || $('#hold:not([hidden])') || sheets.length) { d = null; return; }
+    const onHead = !!e.target.closest('.live-head');
+    if (!onHead && lv.scrollTop > 0) { d = null; return; }
+    d = { lv, y0: e.touches[0].clientY, x0: e.touches[0].clientX, t0: Date.now(), dy: 0, on: false };
+  }, { passive: true });
+  document.addEventListener('touchmove', (e) => {
+    if (!d) return;
+    const dy = e.touches[0].clientY - d.y0, dx = e.touches[0].clientX - d.x0;
+    if (!d.on) {
+      if (dy < 6 || Math.abs(dx) > dy) { if (dy < -4 || Math.abs(dx) > 10) d = null; return; }
+      d.on = true; d.lv.classList.remove('enter'); d.lv.style.transition = 'none';
+      if (ui.tab !== 'train') { ui.tab = 'train'; lastTab = 'train'; const m = $('#main'); m.innerHTML = views.train(); m.className = 'v-train'; $$('.tabbar button').forEach((b) => b.classList.toggle('on', b.dataset.t === 'train')); placeTabInd(false); } document.activeElement && document.activeElement.blur && document.activeElement.blur();
+    }
+    e.preventDefault();
+    d.dy = Math.max(0, dy);
+    d.lv.style.transform = `translateY(${d.dy}px)`;
+    d.lv.style.borderRadius = `${Math.min(28, d.dy / 6)}px`;
+  }, { passive: false });
+  const end = () => {
+    if (!d) return; const { lv, dy, t0, on } = d; d = null; if (!on) return;
+    const v = dy / Math.max(1, Date.now() - t0);
+    if (dy > 140 || (v > 0.6 && dy > 40)) {
+      lv.style.transition = 'transform .32s cubic-bezier(.32,.72,0,1)'; lv.style.transform = 'translateY(100%)';
+      setTimeout(() => { const root = $('#live'); root.hidden = true; root.innerHTML = ''; ui.liveOpen = false; ui.tab = 'train'; render(); }, 300);
+    } else {
+      lv.style.transition = 'transform .4s cubic-bezier(.32,.72,0,1), border-radius .4s'; lv.style.transform = ''; lv.style.borderRadius = '';
+      setTimeout(() => { lv.style.transition = ''; }, 420);
+    }
+  };
+  document.addEventListener('touchend', end); document.addEventListener('touchcancel', end);
+})();
 function renderLive() {
   const root = $('#live');
   const cur = root.querySelector('.live');
@@ -727,7 +763,7 @@ function renderLive() {
       <button class="btn filled block" data-a="liveAddEx">Ajouter un exercice</button>
       <button class="btn red block" data-a="liveCancel">Abandonner la séance</button></div></div>`;
   root.querySelector('.live').scrollTop = sc;
-  if (opening && !reduceMotion()) root.querySelector('.live').classList.add('enter');
+  if (opening && !reduceMotion()) { const lv = root.querySelector('.live'); lv.classList.add('enter'); lv.addEventListener('animationend', () => lv.classList.remove('enter'), { once: true }); }
   renderRest();
 }
 // Barre du bas : chrono de repos pendant la séance, et mini-lecteur partout dans l'appli quand la séance est réduite
@@ -1149,7 +1185,7 @@ const A = {
   startWorkout(el) { unlockAudio(); startWorkout(el.dataset.p, el.dataset.d); },
   startFree() { unlockAudio(); startWorkout(null, null); },
   liveOpen() { ui.liveOpen = true; render(); wakeLock(); },
-  liveMin() { ui.liveOpen = false; render(); },
+  liveMin() { ui.liveOpen = false; ui.tab = 'train'; render(); },
   liveToggle(el) {
     unlockAudio();
     const L = S.live, e = L.exercises[+el.dataset.e], j = +el.dataset.s, s = e.sets[j];
