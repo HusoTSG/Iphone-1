@@ -707,7 +707,7 @@ let liveLeaveT = null;
     if (!lv || lv.classList.contains('leave') || e.touches.length !== 1 || $('#hold:not([hidden])') || sheets.length) { d = null; return; }
     const onHead = !!e.target.closest('.live-head');
     if (!onHead && lv.scrollTop > 0) { d = null; return; }
-    d = { lv, y0: e.touches[0].clientY, x0: e.touches[0].clientX, t0: Date.now(), dy: 0, on: false };
+    d = { lv, y0: e.touches[0].clientY, x0: e.touches[0].clientX, t0: Date.now(), dy: 0, on: false, pts: [] };
   }, { passive: true });
   document.addEventListener('touchmove', (e) => {
     if (!d) return;
@@ -719,18 +719,23 @@ let liveLeaveT = null;
     }
     e.preventDefault();
     d.dy = Math.max(0, dy);
+    const now = performance.now(); d.pts.push([now, d.dy]); while (d.pts.length > 2 && now - d.pts[0][0] > 100) d.pts.shift();
     d.lv.style.transform = `translateY(${d.dy}px)`;
     d.lv.style.borderRadius = `${Math.min(28, d.dy / 6)}px`;
   }, { passive: false });
   const end = () => {
-    if (!d) return; const { lv, dy, t0, on } = d; d = null; if (!on) return;
-    const v = dy / Math.max(1, Date.now() - t0);
-    if (dy > 140 || (v > 0.6 && dy > 40)) {
-      lv.style.transition = 'transform .32s cubic-bezier(.32,.72,0,1)'; lv.style.transform = 'translateY(100%)';
-      setTimeout(() => { const root = $('#live'); root.hidden = true; root.innerHTML = ''; ui.liveOpen = false; ui.tab = 'train'; render(); }, 300);
+    if (!d) return; const { lv, dy, on, pts } = d; d = null; if (!on) return;
+    // Vitesse sur les derniers instants du geste (px/ms), puis position « projetée » comme iOS
+    const a = pts[0], b = pts[pts.length - 1];
+    const v = a && b && b[0] > a[0] ? (b[1] - a[1]) / (b[0] - a[0]) : 0;
+    const H = window.innerHeight, projected = dy + Math.max(0, v) * 220;
+    if (projected > H * 0.3 || (v > 0.45 && dy > 24)) {
+      const ms = Math.round(clamp((H - dy) / Math.max(v, 1.6), 160, 340));
+      lv.style.transition = `transform ${ms}ms cubic-bezier(.2,.75,.35,1)`; lv.style.transform = 'translateY(100%)';
+      setTimeout(() => { const root = $('#live'); root.hidden = true; root.innerHTML = ''; ui.liveOpen = false; ui.tab = 'train'; render(); }, ms);
     } else {
-      lv.style.transition = 'transform .4s cubic-bezier(.32,.72,0,1), border-radius .4s'; lv.style.transform = ''; lv.style.borderRadius = '';
-      setTimeout(() => { lv.style.transition = ''; }, 420);
+      lv.style.transition = 'transform .5s cubic-bezier(.32,.72,0,1), border-radius .5s'; lv.style.transform = ''; lv.style.borderRadius = '';
+      setTimeout(() => { lv.style.transition = ''; }, 520);
     }
   };
   document.addEventListener('touchend', end); document.addEventListener('touchcancel', end);
@@ -780,21 +785,23 @@ function renderRest() {
     if (el.classList.contains('leave')) return;
     el.hidden = true; el.innerHTML = ''; el.dataset.mode = ''; return;
   }
-  const resting = !!L.restEnd;
-  const mode = `${mini ? 'mini' : 'full'}-${resting ? 'rest' : 'run'}`;
+  const resting = !!L.restEnd, paused = L.restPause != null;
+  const mode = `${mini ? 'mini' : 'full'}-${resting ? 'rest' : 'run'}-${paused ? 'p' : ''}`;
   if (el.dataset.mode !== mode) {
     const appearing = !el.dataset.mode;
     el.dataset.mode = mode;
-    el.className = (mini ? 'rest mini' : 'rest') + (appearing && !reduceMotion() ? ' enter' : '');
-    const ctrls = '<button class="btn sm" data-a="restAdd" data-v="-15">−15</button><button class="btn sm" data-a="restAdd" data-v="15">+15</button><button class="btn sm filled" data-a="restSkip">Passer</button>';
-    if (!mini) el.innerHTML = `<div class="prog"></div><div class="in"><div class="grow"><div class="foot">Repos</div><div class="t" id="restT"></div></div>${ctrls}</div>`;
+    el.className = (mini ? 'rest mini' : 'rest') + (paused ? ' paused' : '') + (appearing && !reduceMotion() ? ' enter' : '');
+    const PAUSE = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1.2"/><rect x="14" y="5" width="4" height="14" rx="1.2"/></svg>';
+    const PLAY = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg>';
+    const ctrls = `<button class="btn sm rp" data-a="restPause" aria-label="${paused ? 'Reprendre le repos' : 'Mettre le repos en pause'}">${paused ? PLAY : PAUSE}</button><button class="btn sm" data-a="restAdd" data-v="-15">−15</button><button class="btn sm" data-a="restAdd" data-v="15">+15</button><button class="btn sm filled" data-a="restSkip">Passer</button>`;
+    if (!mini) el.innerHTML = `<div class="prog"></div><div class="in"><div class="grow"><div class="foot">${paused ? 'En pause' : 'Repos'}</div><div class="t" id="restT"></div></div>${ctrls}</div>`;
     else if (resting) el.innerHTML = `<div class="prog"></div><div class="in"><button class="mini-open" data-a="liveOpen" aria-label="Rouvrir la séance"><span class="foot">Repos · ${esc(L.name)}</span><span class="t" id="restT"></span></button>${ctrls}</div>`;
     else el.innerHTML = `<div class="in"><button class="mini-open" data-a="liveOpen" aria-label="Rouvrir la séance"><span class="foot">Séance en cours</span><span class="mn">${esc(L.name)}</span></button><span class="clock" id="miniClock"></span><button class="btn sm filled" data-a="liveOpen">Ouvrir</button></div>`;
   }
   el.hidden = false;
   document.body.classList.toggle('has-mini', mini);
   if (resting) {
-    const left = Math.max(0, (L.restEnd - Date.now()) / 1000);
+    const left = Math.max(0, (paused ? L.restPause : L.restEnd - Date.now()) / 1000);
     const t = $('#restT'); if (t) t.textContent = fmtClock(Math.ceil(left));
     const pr = el.querySelector('.prog'); if (pr) pr.style.width = `${clamp((left / (L.restTotal || 1)) * 100, 0, 100)}%`;
   } else {
@@ -854,7 +861,7 @@ function holdStart(i, jj) {
   const e = S.live.exercises[i], h = holdOf(e); if (!h) return;
   const j = jj != null && e.sets[jj] && !e.sets[jj].done ? jj : e.sets.findIndex((s) => !s.done); if (j < 0) return;
   unlockAudio();
-  if (S.live.restEnd) { S.live.restEnd = null; save(); renderRest(); }
+  if (S.live.restEnd) { S.live.restEnd = null; S.live.restPause = null; save(); renderRest(); }
   hold = { i, j, side: 1, sides: h.sides, dur: h.hold, phase: 'run', end: Date.now() + h.hold * 1000, left: 0 };
   wakeLock();
   let ov = $('#hold');
@@ -865,6 +872,7 @@ function holdStart(i, jj) {
     <div class="hold-ring"><svg viewBox="0 0 200 200"><circle class="bg" cx="100" cy="100" r="88"/><circle class="fg" cx="100" cy="100" r="88" pathLength="1000"/></svg>
       <div class="hold-mid"><div class="hold-num" aria-live="off"></div><div class="hold-side"></div></div></div>
     <div class="hold-msg" aria-live="assertive"></div>
+    <div class="hold-adj"><button class="btn" data-a="holdAdd" data-v="-5">−5 s</button><button class="btn" data-a="holdSkip">Suivant</button><button class="btn" data-a="holdAdd" data-v="5">+5 s</button></div>
     <div class="hold-btns"><button class="btn" data-a="holdStop">Arrêter</button><button class="btn filled" data-a="holdPause">Pause</button></div></div>`;
   ov.hidden = false;
   requestAnimationFrame(() => ov.classList.add('on'));
@@ -1084,7 +1092,7 @@ function pushPost(path, body) {
 // Appelée à chaque sauvegarde : (re)programme ou annule la notif si l'heure de fin du repos a changé.
 function pushSync() {
   if (!pushOn()) return;
-  const at = S.live && S.live.restEnd ? S.live.restEnd : null;
+  const at = S.live && S.live.restEnd && S.live.restPause == null ? S.live.restEnd : null;
   if (at === pushAt) return;
   pushAt = at;
   if (!at) { pushPost('/cancel', { endpoint: S.pushSub.endpoint }).catch(() => {}); return; }
@@ -1200,7 +1208,7 @@ const A = {
     const circ = absCircuitOf(+el.dataset.e);
     const tourLeft = circ && circ.some((i) => L.exercises[i].sets[j] && !L.exercises[i].sets[j].done);
     if (tourLeft) { L.restEnd = null; }
-    else { L.restTotal = e.rest; L.restEnd = Date.now() + e.rest * 1000; }
+    else { L.restTotal = e.rest; L.restEnd = Date.now() + e.rest * 1000; L.restPause = null; }
     if (!circ && e.sets.every((x) => x.done)) {
       e.collapsed = true; save();
       morph(`.live [data-ex="${el.dataset.e}"]`, renderLive);
@@ -1225,7 +1233,7 @@ const A = {
     }
     c.forEach((i) => { const s = L.exercises[i].sets[k]; if (s) s.done = true; });
     const e = L.exercises[c[c.length - 1]];
-    L.restTotal = e.rest; L.restEnd = Date.now() + e.rest * 1000;
+    L.restTotal = e.rest; L.restEnd = Date.now() + e.rest * 1000; L.restPause = null;
     save(); morph(`.live [data-tour="${c[0]}-${k}"]`, renderLive);
     if (S.settings.iosTimer) runIosTimer(e.rest);
   },
@@ -1233,6 +1241,15 @@ const A = {
   tourOpen(el) { ui.tourOpen = ui.tourOpen || {}; ui.tourOpen[el.dataset.k] = !ui.tourOpen[el.dataset.k]; morph(`.live [data-tour="${el.dataset.k}"]`, renderLive); },
   tourAdd(el) { const c = absCircuitOf(+el.dataset.e) || [+el.dataset.e]; c.forEach((i) => S.live.exercises[i].sets.push({ kg: '', reps: '', done: false })); save(); renderLive(); },
   holdStop() { holdClose(); },
+  holdAdd(el) {
+    if (!hold) return; const d = Number(el.dataset.v);
+    if (hold.phase === 'pause') hold.left = Math.max(1, hold.left + d);
+    else hold.end = Math.max(Date.now() + 1000, hold.end + d * 1000);
+    if (hold.phase !== 'switch' && hold.paused !== 'switch') hold.dur = Math.max(hold.dur, Math.ceil(hold.phase === 'pause' ? hold.left : (hold.end - Date.now()) / 1000));
+    holdUpdate();
+  },
+  // Passe directement à l'étape suivante (côté suivant ou fin)
+  holdSkip() { if (!hold) return; if (hold.phase === 'pause') { hold.phase = hold.paused; } hold.end = Date.now(); holdUpdate(); },
   holdPause() {
     if (!hold) return;
     if (hold.phase === 'pause') { hold.phase = hold.paused; hold.end = Date.now() + hold.left * 1000; }
@@ -1257,8 +1274,14 @@ const A = {
   },
   liveSave() { finishWorkout(); },
   liveCancel() { confirmSheet({ title: 'Abandonner la séance ?', text: 'Rien ne sera enregistré.', ok: 'Abandonner', onOk: () => { S.live = null; save(); render(); } }); },
-  restAdd(el) { const L = S.live; if (!L || !L.restEnd) return; const d = Number(el.dataset.v); L.restEnd += d * 1000; L.restTotal = Math.max(L.restTotal + d, 1); if (L.restEnd <= Date.now()) L.restEnd = null; save(); renderRest(); },
-  restSkip() { if (S.live) { S.live.restEnd = null; save(); } renderRest(); },
+  restPause() {
+    const L = S.live; if (!L || !L.restEnd) return;
+    if (L.restPause != null) { L.restEnd = Date.now() + L.restPause; L.restPause = null; }
+    else L.restPause = Math.max(1000, L.restEnd - Date.now());
+    save(); renderRest();
+  },
+  restAdd(el) { const L = S.live; if (!L || !L.restEnd) return; const d = Number(el.dataset.v); if (L.restPause != null) { L.restPause = Math.max(1000, L.restPause + d * 1000); L.restEnd = Date.now() + L.restPause; L.restTotal = Math.max(L.restTotal + d, 1); save(); renderRest(); return; } L.restEnd += d * 1000; L.restTotal = Math.max(L.restTotal + d, 1); if (L.restEnd <= Date.now()) L.restEnd = null; save(); renderRest(); },
+  restSkip() { if (S.live) { S.live.restEnd = null; S.live.restPause = null; save(); } renderRest(); },
   platesLive(el) { const e = S.live.exercises[+el.dataset.e]; const f = e.sets.filter((s) => s.kg !== '').pop(); const p = lastSetsFor(e.exId); platesSheet(f ? num(f.kg) : e.kg || (p ? p[0].kg : 60)); },
   platesFrom(el) { platesSheet(num(el.dataset.kg)); },
 
@@ -1373,6 +1396,7 @@ setInterval(() => {
   const L = S.live; if (!L) return;
   const el = ui.liveOpen ? $('#clock') : $('#liveBanner .clock');
   if (el) el.textContent = fmtClock((Date.now() - L.startedAt) / 1000);
+  if (L.restEnd && L.restPause != null) L.restEnd = Date.now() + L.restPause; // repos en pause : le temps restant ne bouge pas
   if (L.restEnd && Date.now() >= L.restEnd) { L.restEnd = null; save(); beep(); toast('Repos terminé, c’est reparti !'); }
   renderRest();
 }, 500);
