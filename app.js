@@ -377,11 +377,17 @@ function openSheet(ctrl) {
 function paintSheet(ctrl = topSheet()) {
   if (!ctrl) return;
   const sc = ctrl.el.querySelector('.sheet') ? ctrl.el.querySelector('.sheet').scrollTop : 0;
-  ctrl.el.innerHTML = `<div class="sheet" role="dialog" aria-modal="true"><div class="grab"></div>${ctrl.render()}</div>`;
+  ctrl.el.innerHTML = `<div class="sheet${ctrl.painted ? ' noanim' : ''}" role="dialog" aria-modal="true"><div class="grab"></div>${ctrl.render()}</div>`;
+  ctrl.painted = true;
   ctrl.el.querySelector('.sheet').scrollTop = sc;
   if (ctrl.after) ctrl.after(ctrl.el);
 }
-function closeSheet() { const c = sheets.pop(); if (c) { c.el.remove(); if (c.onClose) c.onClose(); } }
+function closeSheet() {
+  const c = sheets.pop(); if (!c) return;
+  if (reduceMotion()) c.el.remove();
+  else { c.el.classList.add('closing'); c.el.style.pointerEvents = 'none'; setTimeout(() => c.el.remove(), 260); }
+  if (c.onClose) c.onClose();
+}
 function closeAllSheets() { while (sheets.length) closeSheet(); }
 const sheetHead = (title, right = '') => `<div class="sheet-head"><button class="link l" data-a="closeSheet">Fermer</button><div class="title">${title}</div><div class="r">${right}</div></div>`;
 function confirmSheet({ title, text = '', ok = 'Supprimer', onOk }) {
@@ -521,9 +527,13 @@ function checkSheet(id = null) {
 }
 
 // ---------- Rendu principal ----------
+let lastTab = null;
 function render() {
-  $('#main').innerHTML = views[ui.tab]();
-  $('#main').className = 'v-' + ui.tab;
+  const m = $('#main');
+  m.innerHTML = views[ui.tab]();
+  const changed = lastTab && lastTab !== ui.tab; lastTab = ui.tab;
+  m.className = 'v-' + ui.tab;
+  if (changed && !reduceMotion()) { void m.offsetWidth; m.classList.add('tab-in'); }
   $$('.tabbar button').forEach((b) => b.classList.toggle('on', b.dataset.t === ui.tab));
   placeTabInd();
   renderLive();
@@ -688,10 +698,25 @@ function exHistSheet(i) {
   });
 }
 
+let liveLeaveT = null;
 function renderLive() {
   const root = $('#live');
-  if (!S.live || !ui.liveOpen) { root.hidden = true; root.innerHTML = ''; document.body.style.overflow = ''; renderRest(); return; }
-  const L = S.live, sc = root.querySelector('.live') ? root.querySelector('.live').scrollTop : 0;
+  const cur = root.querySelector('.live');
+  if (!S.live || !ui.liveOpen) {
+    document.body.style.overflow = '';
+    if (cur && !root.hidden && !reduceMotion()) {
+      if (!cur.classList.contains('leave')) {
+        cur.classList.remove('enter'); cur.classList.add('leave');
+        clearTimeout(liveLeaveT);
+        liveLeaveT = setTimeout(() => { if (!S.live || !ui.liveOpen) { root.hidden = true; root.innerHTML = ''; } }, 360);
+      }
+      renderRest(); return;
+    }
+    root.hidden = true; root.innerHTML = ''; renderRest(); return;
+  }
+  clearTimeout(liveLeaveT);
+  const opening = root.hidden || !cur || cur.classList.contains('leave');
+  const L = S.live, sc = cur && !opening ? cur.scrollTop : 0;
   root.hidden = false; document.body.style.overflow = 'hidden';
   root.innerHTML = `<div class="live"><div class="live-head"><div class="in">
       <button class="icon-btn hb" data-a="liveMin" aria-label="Réduire la séance">${ICON.down}</button>
@@ -702,18 +727,29 @@ function renderLive() {
       <button class="btn filled block" data-a="liveAddEx">Ajouter un exercice</button>
       <button class="btn red block" data-a="liveCancel">Abandonner la séance</button></div></div>`;
   root.querySelector('.live').scrollTop = sc;
+  if (opening && !reduceMotion()) root.querySelector('.live').classList.add('enter');
   renderRest();
 }
 // Barre du bas : chrono de repos pendant la séance, et mini-lecteur partout dans l'appli quand la séance est réduite
 function renderRest() {
   const el = $('#rest'), L = S.live;
   const mini = !!L && !ui.liveOpen;
-  if (!L || (!L.restEnd && !mini)) { el.hidden = true; el.innerHTML = ''; el.dataset.mode = ''; document.body.classList.remove('has-mini'); return; }
+  if (!L || (!L.restEnd && !mini)) {
+    document.body.classList.remove('has-mini');
+    if (!el.hidden && el.dataset.mode && !reduceMotion()) {
+      el.dataset.mode = ''; el.classList.remove('enter'); el.classList.add('leave');
+      setTimeout(() => { if (!el.dataset.mode) { el.hidden = true; el.innerHTML = ''; el.classList.remove('leave'); } }, 280);
+      return;
+    }
+    if (el.classList.contains('leave')) return;
+    el.hidden = true; el.innerHTML = ''; el.dataset.mode = ''; return;
+  }
   const resting = !!L.restEnd;
   const mode = `${mini ? 'mini' : 'full'}-${resting ? 'rest' : 'run'}`;
   if (el.dataset.mode !== mode) {
+    const appearing = !el.dataset.mode;
     el.dataset.mode = mode;
-    el.className = mini ? 'rest mini' : 'rest';
+    el.className = (mini ? 'rest mini' : 'rest') + (appearing && !reduceMotion() ? ' enter' : '');
     const ctrls = '<button class="btn sm" data-a="restAdd" data-v="-15">−15</button><button class="btn sm" data-a="restAdd" data-v="15">+15</button><button class="btn sm filled" data-a="restSkip">Passer</button>';
     if (!mini) el.innerHTML = `<div class="prog"></div><div class="in"><div class="grow"><div class="foot">Repos</div><div class="t" id="restT"></div></div>${ctrls}</div>`;
     else if (resting) el.innerHTML = `<div class="prog"></div><div class="in"><button class="mini-open" data-a="liveOpen" aria-label="Rouvrir la séance"><span class="foot">Repos · ${esc(L.name)}</span><span class="t" id="restT"></span></button>${ctrls}</div>`;
@@ -1132,7 +1168,10 @@ const A = {
     if (!circ && e.sets.every((x) => x.done)) {
       e.collapsed = true; save();
       morph(`.live [data-ex="${el.dataset.e}"]`, renderLive);
-    } else { save(); renderLive(); }
+    } else {
+      save(); renderLive();
+      const t = $(`.live [data-a="liveToggle"][data-e="${el.dataset.e}"][data-s="${j}"]`); if (t) t.classList.add('just');
+    }
     if (!tourLeft && S.settings.iosTimer) runIosTimer(e.rest);
   },
   holdStart(el) { holdStart(+el.dataset.e, el.dataset.s != null ? +el.dataset.s : undefined); },

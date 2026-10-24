@@ -913,3 +913,30 @@ button.tour-ok { border: 0; padding: 0; cursor: pointer; }
 .exc.folded.shrink .fok, .tour.folded.shrink .tour-ok { animation: hf-pop .5s cubic-bezier(.34,1.56,.64,1) .12s both; }
 .exc.grow > *, .tour.grow > * { animation: hf-fade .35s ease both; }
 @media (prefers-reduced-motion: reduce) { .exc > *, .tour > *, .fok, .tour-ok { animation: none !important; } }
+
+/* ---------- Animations douces partout ---------- */
+:root { --spring: cubic-bezier(.32,.72,0,1); }
+/* Séance : monte depuis le bas à l'ouverture, redescend quand on la réduit ou la quitte */
+@keyframes live-in { from { transform: translateY(100%); } to { transform: none; } }
+@keyframes live-out { from { transform: none; } to { transform: translateY(100%); } }
+.live.enter { animation: live-in .45s var(--spring) both; }
+.live.leave { animation: live-out .36s cubic-bezier(.5,0,.75,0) both; pointer-events: none; }
+/* Fenêtres du bas : redescendent en fondu à la fermeture */
+@keyframes sheet-down { to { transform: translateY(100%); } }
+@keyframes fade-out { to { opacity: 0; } }
+.sheet-wrap.closing { animation: fade-out .26s ease both; }
+.sheet-wrap.closing .sheet { animation: sheet-down .26s cubic-bezier(.5,0,.75,0) both; }
+.sheet { animation: up .42s var(--spring) !important; }
+/* Barre de repos / séance réduite : glisse depuis le bas */
+@keyframes bar-in { from { transform: translateY(24px) scale(.96); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes bar-out { to { transform: translateY(24px) scale(.96); opacity: 0; } }
+#rest.enter { animation: bar-in .4s var(--spring) both; }
+#rest.leave { animation: bar-out .26s ease both; pointer-events: none; }
+/* Changement d'onglet : léger fondu + glissement */
+@keyframes tab-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+#main.tab-in { animation: tab-in .32s var(--spring) both; }
+/* Boutons : petit enfoncement au toucher */
+.btn, .icon-btn, .cell, .day-row, .tick, .cap button, .tpill, .tour-hold { transition: transform .18s var(--spring), opacity .18s ease, background-color .2s ease; }
+.btn:active, .icon-btn:active, .day-row:active, .tick:active, .tour-hold:active { transform: scale(.96); }
+.tick.on.just { animation: hf-pop .4s cubic-bezier(.34,1.56,.64,1) both; }
+.sheet.noanim { animation: none !important; }
