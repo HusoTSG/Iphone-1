@@ -815,6 +815,11 @@ header.large.train-h .icon-btn { color: var(--label); }
 .icon-btn.quit { color: var(--red); }
 .icon-btn.quit svg { stroke-width: 2.4; }
 
-/* En-tête séance : « Terminer » à la même hauteur que les boutons ronds */
+/* En-tête séance façon Apple : boutons ronds et « Terminer » de la même hauteur, chrono en pilule */
 .live-head .in { align-items: center; }
-.live-head [data-a="liveFinish"] { height: 44px; min-height: 44px; padding: 0 20px; font-size: 17px; display: inline-flex; align-items: center; }
+.live-head .icon-btn { width: 38px; height: 38px; }
+.live-head .icon-btn svg { width: 19px; height: 19px; }
+.live-head [data-a="liveFinish"] { height: 38px; min-height: 38px; padding: 0 16px; font-size: 16px; display: inline-flex; align-items: center; }
+.live-head .mid { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.live-head .mid .clock { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 999px; font-size: 13px; font-weight: 600;
+  font-variant-numeric: tabular-nums; color: var(--label); background: var(--glass-bg); border: 1px solid var(--glass-edge); box-shadow: inset 0 1px 0 var(--glass-hi); }
