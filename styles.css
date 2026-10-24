@@ -905,3 +905,11 @@ button.tour-ok { border: 0; padding: 0; cursor: pointer; }
 .sets.uf-sets .uf input, .uf-row .uf input { background: transparent !important; border: 0 !important; box-shadow: none !important; padding: 0 !important; min-height: 0 !important;
   text-align: left !important; font-family: var(--font) !important; font-size: 20px !important; font-weight: 600 !important; border-radius: 0 !important; }
 .sets.uf-sets .done input { background: transparent !important; }
+
+/* Animations de repli : contenu qui apparaît en fondu, coche verte qui rebondit */
+@keyframes hf-fade { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+@keyframes hf-pop { 0% { transform: scale(.3); opacity: 0; } 60% { transform: scale(1.18); opacity: 1; } 100% { transform: scale(1); } }
+.exc.folded.shrink > *, .tour.folded.shrink > * { animation: hf-fade .4s ease both; }
+.exc.folded.shrink .fok, .tour.folded.shrink .tour-ok { animation: hf-pop .5s cubic-bezier(.34,1.56,.64,1) .12s both; }
+.exc.grow > *, .tour.grow > * { animation: hf-fade .35s ease both; }
+@media (prefers-reduced-motion: reduce) { .exc > *, .tour > *, .fok, .tour-ok { animation: none !important; } }

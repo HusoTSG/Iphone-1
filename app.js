@@ -626,10 +626,10 @@ function liveCircuit(idx) {
     const cur = !done && members.some((i) => X[i].sets[k].done) || (!done && (k === 0 || idx.every((i) => !X[i].sets[k - 1] || X[i].sets[k - 1].done)));
     const tkey = `${idx[0]}-${k}`;
     if (done && !(ui.tourOpen && ui.tourOpen[tkey])) {
-      html += `<button class="tour folded" data-a="tourOpen" data-k="${tkey}"><span class="tour-h"><span>Tour ${k + 1}</span></span><span class="tour-sum">${members.length} exercices faits</span><span class="tour-ok">${ICON.check}</span></button>`;
+      html += `<button class="tour folded" data-tour="${tkey}" data-a="tourOpen" data-k="${tkey}"><span class="tour-h"><span>Tour ${k + 1}</span></span><span class="tour-sum">${members.length} exercices faits</span><span class="tour-ok">${ICON.check}</span></button>`;
       continue;
     }
-    html += `<div class="tour${done ? ' done' : ''}${cur ? ' cur' : ''}"><div class="tour-h"><span>Tour ${k + 1}</span>${done ? `<button class="tour-ok" data-a="tourOpen" data-k="${tkey}" aria-label="Replier">${ICON.check}</button>` : ''}</div>`;
+    html += `<div class="tour${done ? ' done' : ''}${cur ? ' cur' : ''}" data-tour="${tkey}"><div class="tour-h"><span>Tour ${k + 1}</span>${done ? `<button class="tour-ok" data-a="tourOpen" data-k="${tkey}" aria-label="Replier">${ICON.check}</button>` : ''}</div>`;
     members.forEach((i) => {
       const e = X[i], ex = exById(e.exId), s = e.sets[k], prev = (lastSetsFor(e.exId) || [])[k];
       const phKg = e.kg ? nf(e.kg, 2) : prev ? nf(prev.kg, 2) : k > 0 ? e.sets[k - 1].kg : '';
@@ -653,7 +653,7 @@ function liveExCard(e, i) {
   const done = e.sets.filter((s) => s.done).length, allDone = done === e.sets.length && done > 0;
   if (allDone && e.collapsed !== false) {
     const best = e.sets.reduce((a, s) => Math.max(a, num(s.kg) || 0), 0);
-    return `<button class="exc folded" data-a="liveExpand" data-e="${i}">${exIcon(ex)}<span class="grow"><span class="fn">${esc(ex.name)}</span><span class="fs">${done} séries${best ? ` · ${nf(best, 2)} kg` : ''}</span></span><span class="fok">${ICON.check}</span></button>`;
+    return `<button class="exc folded" data-ex="${i}" data-a="liveExpand" data-e="${i}">${exIcon(ex)}<span class="grow"><span class="fn">${esc(ex.name)}</span><span class="fs">${done} séries${best ? ` · ${nf(best, 2)} kg` : ''}</span></span><span class="fok">${ICON.check}</span></button>`;
   }
   const rows = e.sets.map((s, j) => {
     const p = prev[j];
@@ -666,7 +666,7 @@ function liveExCard(e, i) {
   }).join('');
   const note = cleanNote(e.note);
   const meta = [e.target ? esc(e.target) : '', e.kg ? `<b>${nf(e.kg, 2)} kg</b>` : '', note ? esc(note) : ''].filter(Boolean).join(' · ');
-  return `<div class="exc"><div class="hd">${exIcon(ex)}<div class="grow"><h3>${esc(ex.name)}</h3>${meta ? `<div class="meta">${meta}</div>` : ''}</div>
+  return `<div class="exc" data-ex="${i}"><div class="hd">${exIcon(ex)}<div class="grow"><h3>${esc(ex.name)}</h3>${meta ? `<div class="meta">${meta}</div>` : ''}</div>
       <button class="icon-btn plain" data-a="exHist" data-e="${i}" aria-label="Historique et options">${ICON.clock}</button>
       ${allDone ? `<button class="icon-btn plain" data-a="liveCollapse" data-e="${i}" aria-label="Réduire">${ICON.up}</button>` : ''}</div>
     <div class="sets uf-sets">${rows}</div>
@@ -746,6 +746,23 @@ function beep() {
   } catch (e) { /* son indisponible */ }
   try { if (navigator.vibrate) navigator.vibrate([200, 100, 200]); } catch (e) { /* rien */ }
 }
+// ---------- Animation façon Apple : la case se réduit (ou s'ouvre) en douceur ----------
+const reduceMotion = () => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } };
+function morph(sel, change) {
+  const before = $(sel), oldH = before ? before.offsetHeight : 0;
+  change();
+  const el = $(sel); if (!el || !oldH || reduceMotion()) return;
+  const newH = el.offsetHeight; if (Math.abs(newH - oldH) < 2) return;
+  el.classList.add(newH < oldH ? 'shrink' : 'grow');
+  el.style.height = oldH + 'px'; el.style.overflow = 'hidden';
+  el.getBoundingClientRect();
+  el.style.transition = 'height .45s cubic-bezier(.32,.72,0,1)';
+  el.style.height = newH + 'px';
+  const done = () => { el.style.height = ''; el.style.overflow = ''; el.style.transition = ''; el.classList.remove('shrink', 'grow'); };
+  el.addEventListener('transitionend', (ev) => { if (ev.propertyName === 'height') done(); }, { once: false });
+  setTimeout(done, 700);
+}
+
 // ---------- Chrono de gainage (ex. planche latérale : 30 s, change de côté, 30 s) ----------
 function holdOf(e) {
   let h = e.hold, sides = e.sides;
@@ -1112,8 +1129,10 @@ const A = {
     const tourLeft = circ && circ.some((i) => L.exercises[i].sets[j] && !L.exercises[i].sets[j].done);
     if (tourLeft) { L.restEnd = null; }
     else { L.restTotal = e.rest; L.restEnd = Date.now() + e.rest * 1000; }
-    if (!circ && e.sets.every((x) => x.done)) e.collapsed = true;
-    save(); renderLive();
+    if (!circ && e.sets.every((x) => x.done)) {
+      e.collapsed = true; save();
+      morph(`.live [data-ex="${el.dataset.e}"]`, renderLive);
+    } else { save(); renderLive(); }
     if (!tourLeft && S.settings.iosTimer) runIosTimer(e.rest);
   },
   holdStart(el) { holdStart(+el.dataset.e, el.dataset.s != null ? +el.dataset.s : undefined); },
@@ -1132,11 +1151,11 @@ const A = {
     c.forEach((i) => { const s = L.exercises[i].sets[k]; if (s) s.done = true; });
     const e = L.exercises[c[c.length - 1]];
     L.restTotal = e.rest; L.restEnd = Date.now() + e.rest * 1000;
-    save(); renderLive();
+    save(); morph(`.live [data-tour="${c[0]}-${k}"]`, renderLive);
     if (S.settings.iosTimer) runIosTimer(e.rest);
   },
   tourUndo(el) { const k = +el.dataset.k; (absCircuitOf(+el.dataset.e) || []).forEach((i) => { const s = S.live.exercises[i].sets[k]; if (s) s.done = false; }); if (ui.tourOpen) delete ui.tourOpen[`${el.dataset.e}-${k}`]; save(); renderLive(); },
-  tourOpen(el) { ui.tourOpen = ui.tourOpen || {}; ui.tourOpen[el.dataset.k] = !ui.tourOpen[el.dataset.k]; renderLive(); },
+  tourOpen(el) { ui.tourOpen = ui.tourOpen || {}; ui.tourOpen[el.dataset.k] = !ui.tourOpen[el.dataset.k]; morph(`.live [data-tour="${el.dataset.k}"]`, renderLive); },
   tourAdd(el) { const c = absCircuitOf(+el.dataset.e) || [+el.dataset.e]; c.forEach((i) => S.live.exercises[i].sets.push({ kg: '', reps: '', done: false })); save(); renderLive(); },
   holdStop() { holdClose(); },
   holdPause() {
@@ -1145,8 +1164,8 @@ const A = {
     else { hold.left = Math.max(0, (hold.end - Date.now()) / 1000); hold.paused = hold.phase; hold.phase = 'pause'; }
     holdUpdate();
   },
-  liveExpand(el) { S.live.exercises[+el.dataset.e].collapsed = false; save(); renderLive(); },
-  liveCollapse(el) { S.live.exercises[+el.dataset.e].collapsed = true; save(); renderLive(); },
+  liveExpand(el) { S.live.exercises[+el.dataset.e].collapsed = false; save(); morph(`.live [data-ex="${el.dataset.e}"]`, renderLive); },
+  liveCollapse(el) { S.live.exercises[+el.dataset.e].collapsed = true; save(); morph(`.live [data-ex="${el.dataset.e}"]`, renderLive); },
   exHist(el) { exHistSheet(+el.dataset.e); },
   liveAddSet(el) { const e = S.live.exercises[+el.dataset.e]; e.sets.push({ kg: '', reps: '', done: false }); e.collapsed = false; save(); renderLive(); },
   liveDelSet(el) { const e = S.live.exercises[+el.dataset.e]; if (e.sets.length > 1) e.sets.pop(); save(); if (sheets.length) closeSheet(); renderLive(); },
