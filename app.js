@@ -169,6 +169,60 @@ function syncCoach() {
   return first ? 'Programme du coach ajouté' : 'Programme du coach mis à jour';
 }
 
+// ---------- Résumé texte pour demander conseil à une IA ----------
+function aiSummaryText() {
+  const d = (k) => new Date(parseKey(k)).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  const n1 = (v) => nf(v, 1), kgs = (v) => nf(v, 2);
+  const L = [];
+  L.push(`Résumé HusoFit du ${d(dkey())}`);
+  L.push('');
+  // Mesures
+  const cs = checksSorted();
+  L.push('MESURES (chaque semaine, le matin)');
+  if (!cs.length) L.push('- Aucune mesure pour l’instant');
+  cs.forEach((c) => L.push(`- ${d(c.date)} : ${Number.isFinite(c.kg) ? n1(c.kg) + ' kg' : '—'}${Number.isFinite(c.waist) ? ' · tour de taille ' + n1(c.waist) + ' cm' : ''}`));
+  const W = cs.filter((c) => Number.isFinite(c.kg)), T = cs.filter((c) => Number.isFinite(c.waist));
+  const ev = [];
+  if (W.length > 1) { const x = W[W.length - 1].kg - W[0].kg; ev.push(`poids ${x > 0 ? '+' : x < 0 ? '−' : ''}${n1(Math.abs(x))} kg`); }
+  if (T.length > 1) { const x = T[T.length - 1].waist - T[0].waist; ev.push(`taille ${x > 0 ? '+' : x < 0 ? '−' : ''}${n1(Math.abs(x))} cm`); }
+  if (ev.length) L.push(`Évolution depuis le ${d(cs[0].date)} : ${ev.join(', ')}`);
+  L.push('');
+  // Programme
+  const prog = activeProgram();
+  if (prog) {
+    L.push(`PROGRAMME ACTUEL (${prog.name}, ${prog.days.length} séances par semaine)`);
+    prog.days.forEach((dy) => {
+      L.push(`${dy.name} :`);
+      dy.exercises.forEach((e) => L.push(`  - ${exById(e.exId).name} : ${e.sets} × ${e.reps}${e.hold ? ' s' : ''}${e.kg ? ' à ' + kgs(e.kg) + ' kg' : ''}, repos ${fmtRest(e.rest)}${e.note ? ' (' + e.note + ')' : ''}`));
+    });
+    L.push('');
+  }
+  // Séances récentes
+  const ses = S.sessions.slice().sort((a, b) => (a.date < b.date ? 1 : -1));
+  const since = new Date(parseKey(dkey()).getTime() - 56 * 86400000);
+  const recent = ses.filter((s) => parseKey(s.date) >= since);
+  L.push(`SÉANCES DES 8 DERNIÈRES SEMAINES (${recent.length})`);
+  if (!recent.length) L.push('- Aucune');
+  recent.forEach((s) => {
+    L.push(`${d(s.date)} · ${s.name}${s.duration ? ' (' + fmtDur(s.duration) + ')' : ''}`);
+    s.exercises.forEach((e) => L.push(`  - ${exById(e.exId).name} : ${e.sets.map((x) => `${kgs(x.kg)} kg × ${x.reps}`).join(', ')}`));
+  });
+  L.push('');
+  // Progression
+  const per = {};
+  ses.slice().reverse().forEach((s) => s.exercises.forEach((e) => {
+    const best = e.sets.reduce((a, x) => (x.kg > a.kg || (x.kg === a.kg && x.reps > a.reps) ? x : a), { kg: -1, reps: 0 });
+    if (best.kg < 0) return;
+    (per[e.exId] = per[e.exId] || []).push({ date: s.date, ...best });
+  }));
+  const ids = Object.keys(per);
+  if (ids.length) {
+    L.push('PROGRESSION (meilleure série : première fois → dernière fois)');
+    ids.forEach((id) => { const a = per[id][0], b = per[id][per[id].length - 1]; L.push(`- ${exById(id).name} : ${kgs(a.kg)} kg × ${a.reps} (${d(a.date)}) → ${kgs(b.kg)} kg × ${b.reps} (${d(b.date)}), ${per[id].length} séance${per[id].length > 1 ? 's' : ''}`); });
+  }
+  return L.join('\n');
+}
+
 // ---------- Petits composants ----------
 function toast(msg, undo = null) {
   $$('.toast').forEach((t) => t.remove());
@@ -1102,6 +1156,8 @@ function settingsSheet() {
         <div class="group" style="margin-top:8px">${cell({ a: 'timerGuide', t: 'Créer le raccourci (une seule fois)' })}</div>
         <div class="section-f">Le repos s’affiche dans la Dynamic Island et l’iPhone sonne quand c’est le moment de reprendre, même verrouillé.</div></div>
       <div class="section"><div class="section-h">Apparence</div><div class="segment">${[['auto', 'Auto'], ['light', 'Clair'], ['dark', 'Sombre']].map(([v, n]) => `<button class="${S.settings.theme === v ? 'on' : ''}" data-a="theme" data-v="${v}">${n}</button>`).join('')}</div></div>
+      <div class="section"><div class="section-h">Coach IA</div><div class="group">${cell({ a: 'aiSummary', t: '<span style="color:var(--blue)">Copier pour mon coach IA</span>', chev: false })}</div>
+        <div class="section-f">Copie un résumé de tes mesures, de ton programme et de tes séances. Colle-le dans Claude pour demander conseil.</div></div>
       <div class="section"><div class="section-h">Sauvegarde</div><div class="group">${cell({ a: 'exportData', t: '<span style="color:var(--blue)">Exporter mes données</span>', chev: false })}<label class="cell" style="cursor:pointer"><span class="main"><span class="t" style="color:var(--blue)">Importer une sauvegarde</span></span><input class="vh" type="file" accept="application/json,.json" data-change="importData"></label></div>
         <div class="section-f">Tes données restent sur cet iPhone. Exporte-les de temps en temps vers Fichiers ou iCloud Drive.</div></div>
       <div class="group"><button class="cell danger" data-a="wipe">Effacer toutes les données</button></div>`,
@@ -1344,6 +1400,17 @@ const A = {
   checkDel() { const c = topSheet(); confirmSheet({ title: 'Supprimer cette mesure ?', onOk: () => { S.checks = S.checks.filter((x) => x.id !== c.id); save(); closeAllSheets(); render(); } }); },
 
   theme(el) { S.settings.theme = el.dataset.v; applyTheme(); save(); paintSheet(); },
+  async aiSummary() {
+    const txt = aiSummaryText();
+    let ok = false;
+    try { await navigator.clipboard.writeText(txt); ok = true; } catch (e) { /* on tente autrement */ }
+    if (!ok) {
+      try { const t = document.createElement('textarea'); t.value = txt; t.setAttribute('readonly', ''); t.style.position = 'fixed'; t.style.opacity = '0'; document.body.appendChild(t); t.select(); t.setSelectionRange(0, txt.length); ok = document.execCommand('copy'); t.remove(); } catch (e) { ok = false; }
+    }
+    if (ok) toast('Résumé copié, colle-le dans Claude');
+    else if (navigator.share) { try { await navigator.share({ title: 'HusoFit', text: txt }); } catch (e) { /* annulé */ } }
+    else toast('Impossible de copier');
+  },
   async exportData() {
     const blob = new Blob([JSON.stringify({ app: 'HusoFit', version: 2, exportedAt: new Date().toISOString(), state: S })], { type: 'application/json' });
     const name = `husofit-${dkey()}.json`;
