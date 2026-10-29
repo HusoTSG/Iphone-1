@@ -100,6 +100,12 @@ const activeProgram = () => S.programs.find((p) => p.id === S.activeProgramId) |
 const sessionsSorted = () => S.sessions.slice().sort((a, b) => b.startedAt - a.startedAt);
 const checksSorted = () => S.checks.slice().sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
 
+function suggestKg(e, j) {
+  if (j > 0 && e.sets[j - 1] && e.sets[j - 1].kg !== '') return e.sets[j - 1].kg;
+  const prev = lastSetsFor(e.exId);
+  if (prev && prev.length) { const p = prev[j] || prev[prev.length - 1]; if (p && Number.isFinite(p.kg)) return nf(p.kg, 2); }
+  return e.kg ? nf(e.kg, 2) : '';
+}
 function lastSetsFor(exId) {
   for (const s of sessionsSorted()) { const e = s.exercises.find((x) => x.exId === exId); if (e && e.sets.length) return e.sets; }
   return null;
@@ -695,7 +701,7 @@ function liveCircuit(idx) {
     html += `<div class="tour${done ? ' done' : ''}${cur ? ' cur' : ''}" data-tour="${tkey}"><div class="tour-h"><span>Tour ${k + 1}</span>${done ? `<button class="tour-ok" data-a="tourOpen" data-k="${tkey}" aria-label="Replier">${ICON.check}</button>` : ''}</div>`;
     members.forEach((i) => {
       const e = X[i], ex = exById(e.exId), s = e.sets[k], prev = (lastSetsFor(e.exId) || [])[k];
-      const phKg = e.kg ? nf(e.kg, 2) : prev ? nf(prev.kg, 2) : k > 0 ? e.sets[k - 1].kg : '';
+      const phKg = suggestKg(e, k);
       const phR = prev ? prev.reps : k > 0 && e.sets[k - 1].reps !== '' ? e.sets[k - 1].reps : (e.repsT || '');
       const h = holdOf(e);
       const meta = h ? (h.sides > 1 ? 'chaque côté' : '') : cleanNote(e.note);
@@ -720,7 +726,7 @@ function liveExCard(e, i) {
   }
   const rows = e.sets.map((s, j) => {
     const p = prev[j];
-    const phKg = e.kg ? nf(e.kg, 2) : p ? nf(p.kg, 2) : j > 0 ? e.sets[j - 1].kg : '';
+    const phKg = suggestKg(e, j);
     const phR = p ? p.reps : j > 0 && e.sets[j - 1].reps !== '' ? e.sets[j - 1].reps : (e.repsT || '');
     return `<div class="row-wrap ${s.done ? 'done' : ''}">
       <label class="uf"><input type="text" inputmode="numeric" id="ls-${i}-${j}-reps" value="${esc(s.reps)}" placeholder="${esc(phR)}" data-in="liveSet" data-e="${i}" data-s="${j}" data-f="reps" aria-label="${holdOf(e) ? 'Secondes' : 'Répétitions'} série ${j + 1}"><span class="u">${holdOf(e) ? 's' : 'reps'}</span></label>
@@ -728,7 +734,9 @@ function liveExCard(e, i) {
       <button class="tick ${s.done ? 'on' : ''}" data-a="liveToggle" data-e="${i}" data-s="${j}" aria-label="Valider la série ${j + 1}">${ICON.check}</button></div>`;
   }).join('');
   const note = cleanNote(e.note);
-  const meta = [e.target ? esc(e.target) : '', e.kg ? `<b>${nf(e.kg, 2)} kg</b>` : '', note ? esc(note) : ''].filter(Boolean).join(' · ');
+  const lastKg = prev.length ? Math.max(...prev.map((x) => num(x.kg) || 0)) : 0;
+  const showKg = lastKg || e.kg;
+  const meta = [e.target ? esc(e.target) : '', showKg ? `<b>${nf(showKg, 2)} kg</b>` : '', note ? esc(note) : ''].filter(Boolean).join(' · ');
   return `<div class="exc" data-ex="${i}"><div class="hd">${exIcon(ex)}<div class="grow"><h3>${esc(ex.name)}</h3>${meta ? `<div class="meta">${meta}</div>` : ''}</div>
       <button class="icon-btn plain" data-a="exHist" data-e="${i}" aria-label="Historique et options">${ICON.clock}</button>
       ${allDone ? `<button class="icon-btn plain" data-a="liveCollapse" data-e="${i}" aria-label="Réduire">${ICON.up}</button>` : ''}</div>
@@ -1286,7 +1294,7 @@ const A = {
     const L = S.live, e = L.exercises[+el.dataset.e], j = +el.dataset.s, s = e.sets[j];
     if (s.done) { s.done = false; save(); renderLive(); return; }
     const prev = (lastSetsFor(e.exId) || [])[j];
-    if (s.kg === '') s.kg = e.kg ? nf(e.kg, 2) : prev ? nf(prev.kg, 2) : j > 0 ? e.sets[j - 1].kg : '';
+    if (s.kg === '') s.kg = suggestKg(e, j);
     if (s.reps === '') s.reps = prev ? String(prev.reps) : j > 0 && e.sets[j - 1].reps !== '' ? e.sets[j - 1].reps : (e.repsT || '');
     if (!(num(s.reps) > 0)) { s.reps = ''; toast('Indique le nombre de répétitions'); const i = $(`#ls-${el.dataset.e}-${j}-reps`); if (i) i.focus(); return; }
     if (s.kg === '') s.kg = '0';
@@ -1313,7 +1321,7 @@ const A = {
     for (const i of c) {
       const e = L.exercises[i], s = e.sets[k]; if (!s || s.done) continue;
       const prev = (lastSetsFor(e.exId) || [])[k];
-      if (s.kg === '') s.kg = e.kg ? nf(e.kg, 2) : prev ? nf(prev.kg, 2) : k > 0 ? e.sets[k - 1].kg : '';
+      if (s.kg === '') s.kg = suggestKg(e, k);
       if (s.reps === '') s.reps = prev ? String(prev.reps) : k > 0 && e.sets[k - 1].reps !== '' ? e.sets[k - 1].reps : (e.repsT || '');
       if (!(num(s.reps) > 0)) { s.reps = ''; save(); renderLive(); toast(`Indique les reps de ${exById(e.exId).name}`); const f = $(`#ls-${i}-${k}-reps`); if (f) f.focus(); return; }
       if (s.kg === '') s.kg = '0';
