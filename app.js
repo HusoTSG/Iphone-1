@@ -160,6 +160,9 @@ function syncCoach() {
     if (S.sessions.some((x) => x.id === id)) return;
     S.sessions.push({ id, date: l.date, startedAt: parseKey(l.date).getTime() + 18 * 3600000, duration: 0, name: l.name, programId: C.id, dayId: l.dayId, exercises: l.exercises.map((e) => ({ exId: e.exId, sets: e.sets.map(([kg, reps]) => ({ kg, reps })) })), prs: [], imported: true });
   });
+  // Le leg extension du samedi (plus léger) a son propre historique, séparé de celui du mardi
+  S.sessions.forEach((s) => { if (s.dayId === 'sat-leg') s.exercises.forEach((e) => { if (e.exId === 'leg-ext') e.exId = 'leg-ext-light'; }); });
+  if (S.live && S.live.dayId === 'sat-leg') S.live.exercises.forEach((e) => { if (e.exId === 'leg-ext') { e.exId = 'leg-ext-light'; e.kg = 49.5; } });
   // Séance en cours : applique les nouveaux temps de repos et les exercices remplacés (sans toucher aux séries déjà faites)
   if (S.live && S.live.programId === C.id) {
     const dy = prog.days.find((x) => x.id === S.live.dayId);

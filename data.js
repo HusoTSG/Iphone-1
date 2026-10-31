@@ -54,6 +54,7 @@ const EXERCISES = [
   { id: 'leg-press', name: 'Presse à cuisses', muscle: 'Quadriceps', equip: 'Machine' },
   { id: 'leg-press-narrow', name: 'Presse à cuisses pieds serrés', muscle: 'Quadriceps', equip: 'Machine' },
   { id: 'leg-ext', name: 'Leg extension', muscle: 'Quadriceps', equip: 'Machine' },
+  { id: 'leg-ext-light', name: 'Leg extension (léger)', muscle: 'Quadriceps', equip: 'Machine' },
   { id: 'bulgarian', name: 'Fentes bulgares', muscle: 'Quadriceps', equip: 'Haltères' },
   { id: 'lunge', name: 'Fentes marchées', muscle: 'Quadriceps', equip: 'Haltères' },
   { id: 'rdl', name: 'Soulevé de terre roumain', muscle: 'Ischios', equip: 'Barre' },
@@ -89,7 +90,7 @@ const EXERCISES = [
 const COACH_PROGRAM = {
   id: 'coach',
   name: 'Programme coach',
-  version: 12,
+  version: 13,
   days: [
     { id: 'mon-upper', name: 'Lundi · Upper', weekday: 1, exercises: [
       { exId: 'lat-pulldown', sets: 3, reps: '8-12', kg: 36.5, rest: 120, note: '1-2 RIR' },
@@ -132,7 +133,7 @@ const COACH_PROGRAM = {
       { exId: 'seated-leg-curl', sets: 3, reps: '10-15', kg: 57, rest: 120, note: '1-2 RIR' },
       { exId: 'db-rdl', sets: 3, reps: '8-12', kg: 24, rest: 120, note: '1-2 RIR · charge modérée, attention au dos' },
       { exId: 'back-ext-rounded', sets: 3, reps: '8-12', kg: 12.5, rest: 90, note: '1-2 RIR · arrondir le dos au maximum' },
-      { exId: 'leg-ext', sets: 3, reps: '15-20', kg: 49.5, rest: 120, note: '1-2 RIR' },
+      { exId: 'leg-ext-light', sets: 3, reps: '15-20', kg: 49.5, rest: 120, note: '1-2 RIR' },
       { exId: 'lunge', sets: 3, reps: '6-10', kg: 20, rest: 120, note: '1-2 RIR · reps par jambe' },
       { exId: 'calf-seated', sets: 3, reps: '10-15', kg: 30, rest: 90, note: '1-2 RIR' },
     ] },
@@ -174,7 +175,7 @@ const COACH_PROGRAM = {
       { exId: 'seated-leg-curl', sets: [[57, 9], [57, 9], [57, 10]] },
       { exId: 'db-rdl', sets: [[24, 8], [24, 8], [24, 9]] },
       { exId: 'back-ext-rounded', sets: [[12.5, 8], [12.5, 9], [12.5, 9]] },
-      { exId: 'leg-ext', sets: [[49.5, 17], [49.5, 18], [49.5, 18]] },
+      { exId: 'leg-ext-light', sets: [[49.5, 17], [49.5, 18], [49.5, 18]] },
       { exId: 'lunge', sets: [[20, 6], [20, 6], [20, 7]] },
       { exId: 'calf-seated', sets: [[30, 13], [30, 13], [30, 14]] },
     ] },
