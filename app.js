@@ -445,9 +445,9 @@ function paintSheet(ctrl = topSheet()) {
   ctrl.el.querySelector('.sheet').scrollTop = sc;
   if (ctrl.after) ctrl.after(ctrl.el);
 }
-function closeSheet() {
+function closeSheet(instant = false) {
   const c = sheets.pop(); if (!c) return;
-  if (reduceMotion()) c.el.remove();
+  if (reduceMotion() || instant === true) c.el.remove();
   else { c.el.classList.add('closing'); c.el.style.pointerEvents = 'none'; setTimeout(() => c.el.remove(), 260); }
   if (c.onClose) c.onClose();
 }
@@ -763,6 +763,49 @@ function exHistSheet(i) {
 }
 
 let liveLeaveT = null;
+// Fenêtres du bas : glisser vers le bas pour fermer, comme sur iPhone (depuis la poignée, le titre, ou le haut de la liste)
+(() => {
+  let g = null;
+  document.addEventListener('touchstart', (e) => {
+    const sh = e.target.closest && e.target.closest('.sheet');
+    const top = sheets.length ? sheets[sheets.length - 1] : null;
+    if (!sh || !top || !top.el.contains(sh) || e.touches.length !== 1 || sh.classList.contains('closing')) { g = null; return; }
+    const onTop = !!e.target.closest('.grab, .sheet-head');
+    if (!onTop && sh.scrollTop > 0) { g = null; return; }
+    g = { sh, wrap: top.el, y0: e.touches[0].clientY, x0: e.touches[0].clientX, on: false, dy: 0, pts: [] };
+  }, { passive: true });
+  document.addEventListener('touchmove', (e) => {
+    if (!g) return;
+    const dy = e.touches[0].clientY - g.y0, dx = e.touches[0].clientX - g.x0;
+    if (!g.on) {
+      if (dy < 6 || Math.abs(dx) > dy) { if (dy < -4 || Math.abs(dx) > 10) g = null; return; }
+      g.on = true; g.sh.style.animation = 'none'; g.sh.style.transition = 'none'; g.wrap.style.animation = 'none';
+      if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    }
+    e.preventDefault();
+    g.dy = Math.max(0, dy);
+    const now = performance.now(); g.pts.push([now, g.dy]); while (g.pts.length > 2 && now - g.pts[0][0] > 100) g.pts.shift();
+    g.sh.style.transform = `translateY(${g.dy}px)`;
+    g.wrap.style.background = `rgba(0,0,0,${0.4 * Math.max(0, 1 - g.dy / (g.sh.offsetHeight || 600))})`;
+  }, { passive: false });
+  const end = () => {
+    if (!g) return; const { sh, wrap, dy, pts, on } = g; g = null; if (!on) return;
+    const a = pts[0], b = pts[pts.length - 1];
+    const v = a && b && b[0] > a[0] ? (b[1] - a[1]) / (b[0] - a[0]) : 0;
+    const h = sh.offsetHeight || 600;
+    if (dy + Math.max(0, v) * 220 > h * 0.35 || (v > 0.5 && dy > 24)) {
+      const ms = Math.round(clamp((h - dy) / Math.max(v, 1.4), 160, 320));
+      sh.style.transition = `transform ${ms}ms cubic-bezier(.2,.75,.35,1)`; sh.style.transform = 'translateY(100%)';
+      wrap.style.transition = `background ${ms}ms ease`; wrap.style.background = 'rgba(0,0,0,0)';
+      setTimeout(() => closeSheet(true), ms);
+    } else {
+      sh.style.transition = 'transform .5s cubic-bezier(.32,.72,0,1)'; sh.style.transform = '';
+      wrap.style.transition = 'background .4s ease'; wrap.style.background = '';
+      setTimeout(() => { sh.style.transition = ''; wrap.style.transition = ''; }, 520);
+    }
+  };
+  document.addEventListener('touchend', end); document.addEventListener('touchcancel', end);
+})();
 // Réduire la séance : elle se rétrécit directement dans la barre « Séance en cours » (comme le mini-lecteur de Musique)
 function showHomeUnderLive() {
   ui.liveOpen = false; ui.tab = 'train'; lastTab = 'train';
@@ -859,7 +902,7 @@ function renderLive() {
       <div class="right"><div class="cap"><button class="quit" data-a="liveCancel" aria-label="Abandonner la séance">${lineIcon('xmark', 22)}</button><button class="done" data-a="liveFinish" aria-label="Terminer la séance">${ICON.check}</button></div></div></div></div>
     <div class="live-body">${groupAbs(L.exercises, liveExCard, liveCircuit) || '<div class="exc"><div class="empty">Ajoute ton premier exercice.</div></div>'}
       <button class="btn add-ex" data-a="liveAddEx">${lineIcon('plus', 18)}Ajouter un exercice</button>
-      <button class="btn filled block" data-a="liveFinish">${ICON.check}Terminer la séance</button>
+      <button class="btn filled block" data-a="liveFinish">${ICON.check}Terminer</button>
       <button class="btn red block" data-a="liveCancel">Abandonner la séance</button></div></div>`;
   root.querySelector('.live').scrollTop = sc;
   if (opening && !reduceMotion()) { const lv = root.querySelector('.live'); lv.classList.add('enter'); lv.addEventListener('animationend', () => lv.classList.remove('enter'), { once: true }); }
