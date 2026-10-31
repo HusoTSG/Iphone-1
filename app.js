@@ -858,7 +858,8 @@ function renderLive() {
       </div><div class="tpill" aria-label="Durée de la séance">${ICON.stopwatch}<span class="clock" id="clock">${fmtClock((Date.now() - L.startedAt) / 1000)}</span></div>
       <div class="right"><div class="cap"><button class="quit" data-a="liveCancel" aria-label="Abandonner la séance">${lineIcon('xmark', 22)}</button><button class="done" data-a="liveFinish" aria-label="Terminer la séance">${ICON.check}</button></div></div></div></div>
     <div class="live-body">${groupAbs(L.exercises, liveExCard, liveCircuit) || '<div class="exc"><div class="empty">Ajoute ton premier exercice.</div></div>'}
-      <button class="btn filled block" data-a="liveAddEx">Ajouter un exercice</button>
+      <button class="btn add-ex" data-a="liveAddEx">${lineIcon('plus', 18)}Ajouter un exercice</button>
+      <button class="btn filled block" data-a="liveFinish">${ICON.check}Terminer la séance</button>
       <button class="btn red block" data-a="liveCancel">Abandonner la séance</button></div></div>`;
   root.querySelector('.live').scrollTop = sc;
   if (opening && !reduceMotion()) { const lv = root.querySelector('.live'); lv.classList.add('enter'); lv.addEventListener('animationend', () => lv.classList.remove('enter'), { once: true }); }

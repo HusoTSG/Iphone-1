@@ -977,3 +977,7 @@ body.live-open #main { transform: scale(.94); opacity: .6; }
 /* Accueil : la barre « Séance en cours » ne décale pas les journées (on peut juste défiler un peu) */
 body.has-mini #main.v-train { min-height: calc(var(--screen-h, 100dvh) - env(safe-area-inset-top, 0px) + 78px); }
 .rest .btn.mini-x { width: 36px; padding: 0; justify-content: center; color: var(--red); flex-shrink: 0; }
+
+/* Bas de séance : « Ajouter un exercice » au centre, « Terminer la séance » en bouton principal */
+.live-body .btn.add-ex { align-self: center; gap: 6px; min-height: 44px; padding: 0 18px; color: var(--blue); font-weight: 600; }
+.live-body .btn.filled.block svg { width: 18px; height: 18px; margin-right: 6px; }
