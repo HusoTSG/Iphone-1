@@ -70,6 +70,21 @@ function defaultState() {
   return { v: 2, settings: { rest: 90, theme: 'auto', bar: 20, iosTimer: false }, programs: [], activeProgramId: null, customExercises: [], sessions: [], live: null, checks: [], coachVersion: 0 };
 }
 let S = defaultState();
+// Version de l'appli : doit être la même que VERSION dans sw.js
+const APP_VERSION = 'husofit-v78';
+// Mise à jour automatique : si une nouvelle version est en ligne, l'appli se recharge toute seule (données gardées)
+function checkUpdate() {
+  if (!/^https?:/.test(location.protocol)) return;
+  fetch('sw.js?t=' + Date.now(), { cache: 'no-store' }).then((r) => (r.ok ? r.text() : '')).then((txt) => {
+    const m = txt.match(/VERSION = '([^']+)'/);
+    if (!m || m[1] === APP_VERSION) return;
+    let tried = null; try { tried = sessionStorage.getItem('husofit-upd'); } catch (e) { /* rien */ }
+    if (tried === m[1]) return; // déjà essayé : évite de recharger en boucle
+    try { sessionStorage.setItem('husofit-upd', m[1]); } catch (e) { /* rien */ }
+    try { navigator.serviceWorker && navigator.serviceWorker.getRegistration().then((g) => g && g.update()); } catch (e) { /* rien */ }
+    Promise.resolve(save(true)).finally(() => location.reload());
+  }).catch(() => {});
+}
 const ui = { tab: 'train', liveOpen: true, chart: 'kg', range: '3m' };
 
 let saveTimer = null;
@@ -1235,7 +1250,8 @@ function settingsSheet() {
         <div class="section-f">Copie un résumé de tes mesures, de ton programme et de tes séances. Colle-le dans Claude pour demander conseil.</div></div>
       <div class="section"><div class="section-h">Sauvegarde</div><div class="group">${cell({ a: 'exportData', t: '<span style="color:var(--blue)">Exporter mes données</span>', chev: false })}<label class="cell" style="cursor:pointer"><span class="main"><span class="t" style="color:var(--blue)">Importer une sauvegarde</span></span><input class="vh" type="file" accept="application/json,.json" data-change="importData"></label></div>
         <div class="section-f">Tes données restent sur cet iPhone. Exporte-les de temps en temps vers Fichiers ou iCloud Drive.</div></div>
-      <div class="group"><button class="cell danger" data-a="wipe">Effacer toutes les données</button></div>`,
+      <div class="group"><button class="cell danger" data-a="wipe">Effacer toutes les données</button></div>
+      <div class="section-f" style="text-align:center">HusoFit · version ${APP_VERSION.replace('husofit-v', '')}</div>`,
   });
 }
 
@@ -1561,7 +1577,7 @@ document.addEventListener('submit', (e) => { const f = e.target.closest('[data-s
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && sheets.length) closeSheet(); });
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'hidden') save(true);
-  else { if (S.live && ui.liveOpen) wakeLock(); if (!sheets.length && !S.live) render(); }
+  else { checkUpdate(); if (S.live && ui.liveOpen) wakeLock(); if (!sheets.length && !S.live) render(); }
 });
 if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
 
@@ -1601,5 +1617,6 @@ async function boot() {
   try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) { /* rien */ }
   try { if ('serviceWorker' in navigator && location.protocol === 'https:' && document.documentElement.classList.contains('pwa')) navigator.serviceWorker.register('sw.js'); } catch (e) { /* rien */ }
   pushRefresh();
+  checkUpdate();
 }
 boot();
