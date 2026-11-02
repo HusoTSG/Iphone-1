@@ -123,10 +123,26 @@ const sessionSets = (s) => s.exercises.reduce((a, e) => a + e.sets.length, 0);
 const todayWd = () => ((new Date().getDay() + 6) % 7) + 1;
 
 // Jours du programme déjà faits cette semaine (lundi → dimanche), quel que soit le jour où la séance a été faite
-function doneThisWeek(prog) {
-  const monday = addDays(dkey(), -(todayWd() - 1));
-  return new Set(S.sessions.filter((s) => s.programId === prog.id && s.dayId && s.date >= monday).map((s) => s.dayId));
+// « Semaine » du programme = un cycle : il redémarre quand on refait un jour déjà fait, ou quand on refait le premier jour
+// (Lundi), même si c'est fait en avance le dimanche. Sans séance depuis la fin du cycle, il repart aussi au lundi suivant.
+function currentCycle(prog) {
+  const planned = prog.days.filter((d) => d.weekday).sort((a, b) => a.weekday - b.weekday);
+  const first = (planned[0] || prog.days[0] || {}).id;
+  const ids = new Set(prog.days.map((d) => d.id));
+  const ses = S.sessions.filter((s) => s.programId === prog.id && s.dayId && ids.has(s.dayId)).sort((a, b) => a.startedAt - b.startedAt);
+  let cyc = null;
+  for (const s of ses) {
+    if (!cyc || cyc.days.has(s.dayId) || (s.dayId === first && cyc.days.size > 0)) cyc = { days: new Set(), start: s.date, firstDay: s.dayId };
+    cyc.days.add(s.dayId);
+  }
+  if (!cyc) return { days: new Set(), start: null };
+  // Lundi de rattachement : un Lundi fait le dimanche compte pour la semaine qui commence le lendemain
+  const wd = ((parseKey(cyc.start).getDay() + 6) % 7) + 1;
+  const monday = cyc.firstDay === first && wd === 7 ? addDays(cyc.start, 1) : addDays(cyc.start, -(wd - 1));
+  if (dkey() >= addDays(monday, 7)) return { days: new Set(), start: null };
+  return cyc;
 }
+function doneThisWeek(prog) { return currentCycle(prog).days; }
 function nextWorkout() {
   const prog = activeProgram();
   if (!prog || !prog.days.length) return null;
@@ -1056,8 +1072,11 @@ function finishWorkout() {
     const h = exerciseHistory(e.exId); const prevBest = h.length ? Math.max(...h.map((x) => x.best)) : 0;
     if (prevBest > 0 && Math.max(...e.sets.map((s) => e1rm(s.kg, s.reps))) > prevBest + 0.01) prs.push(e.exId);
   });
+  const progL = S.programs.find((x) => x.id === L.programId);
+  const wasDone = progL ? doneThisWeek(progL).size : 0;
   const s = { id: L.id, date: dkey(new Date(L.startedAt)), startedAt: L.startedAt, duration: Math.round((Date.now() - L.startedAt) / 1000), name: L.name, programId: L.programId, dayId: L.dayId, exercises, prs };
   if (exercises.length) S.sessions.push(s);
+  const newWeek = !!(exercises.length && progL && wasDone > 0 && doneThisWeek(progL).size === 1);
   S.live = null;
   try { if (wl) wl.release(); } catch (e) { /* rien */ }
   save(true); closeAllSheets(); render();
@@ -1065,6 +1084,7 @@ function finishWorkout() {
   openSheet({
     render: () => `${sheetHead('')}<div style="text-align:center" class="stack"><h2>Séance terminée</h2><p class="muted small" style="margin:0">${esc(s.name)}</p></div>
       <div class="card"><div class="grid2"><div class="metric"><span class="k">Durée</span><span class="v">${fmtDur(s.duration)}</span></div><div class="metric"><span class="k">Volume</span><span class="v">${nf(sessionVolume(s))}<small>kg</small></span></div></div>
+      ${newWeek ? `<div class="row"><span class="pill pr" style="background:var(--blue);color:#fff">Nouvelle semaine</span><span class="small">C’est reparti : le compteur repart à zéro.</span></div>` : ''}
       ${prs.length ? `<div class="row"><span class="pill pr">Record</span><span class="small">${prs.map((id) => esc(exById(id).name)).join(', ')}</span></div>` : ''}</div>
       <button class="btn filled block" data-a="closeSheet">OK</button>`,
   });
