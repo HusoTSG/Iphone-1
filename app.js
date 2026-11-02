@@ -70,8 +70,32 @@ function defaultState() {
   return { v: 2, settings: { rest: 90, theme: 'auto', bar: 20, iosTimer: false }, programs: [], activeProgramId: null, customExercises: [], sessions: [], live: null, checks: [], coachVersion: 0 };
 }
 let S = defaultState();
+// Petite vibration au toucher. iPhone (iOS 18+) : on « touche » un interrupteur invisible, ce qui fait vibrer.
+function haptic() {
+  try {
+    if (navigator.vibrate) { navigator.vibrate(12); return; }
+    const l = document.createElement('label'); l.setAttribute('aria-hidden', 'true'); l.style.display = 'none';
+    const i = document.createElement('input'); i.type = 'checkbox'; i.setAttribute('switch', '');
+    l.appendChild(i); document.head.appendChild(l); l.click(); document.head.removeChild(l);
+  } catch (e) { /* pas de vibration possible */ }
+}
+// Petite fête : confettis discrets (record battu, semaine terminée)
+function celebrate() {
+  if (reduceMotion()) return;
+  const box = document.createElement('div'); box.className = 'confetti'; box.setAttribute('aria-hidden', 'true');
+  const cols = ['var(--blue)', 'var(--green)', 'var(--orange)', '#bf5af2', '#ffd60a', '#ff375f'];
+  for (let k = 0; k < 34; k++) {
+    const s = document.createElement('i');
+    const a = (Math.random() * 1.4 - 0.7) * Math.PI / 2 - Math.PI / 2; const d = 140 + Math.random() * 200;
+    s.style.setProperty('--x', `${Math.cos(a) * d}px`); s.style.setProperty('--y', `${Math.sin(a) * d}px`);
+    s.style.setProperty('--r', `${Math.random() * 720 - 360}deg`); s.style.setProperty('--d', `${0.9 + Math.random() * 0.6}s`);
+    s.style.background = cols[k % cols.length]; if (k % 3 === 0) s.style.borderRadius = '50%';
+    box.appendChild(s);
+  }
+  document.body.appendChild(box); setTimeout(() => box.remove(), 1800);
+}
 // Version de l'appli : doit être la même que VERSION dans sw.js
-const APP_VERSION = 'husofit-v78';
+const APP_VERSION = 'husofit-v79';
 // Mise à jour automatique : si une nouvelle version est en ligne, l'appli se recharge toute seule (données gardées)
 function checkUpdate() {
   if (!/^https?:/.test(location.protocol)) return;
@@ -285,7 +309,7 @@ function closeSwipes(except) {
   $$('.swipe.open').forEach((x) => { if (x !== except) { x.classList.remove('open'); x.querySelector('.swipe-fg').style.transform = ''; setTimeout(() => { if (!x.classList.contains('open')) x.classList.remove('reveal'); }, 300); } });
 }
 function swipeDelete(row) {
-  const kind = row.dataset.kind, id = row.dataset.id;
+  const kind = row.dataset.kind, id = row.dataset.id; haptic();
   row.style.maxHeight = row.offsetHeight + 'px';
   row.classList.add('removing');
   requestAnimationFrame(() => { row.style.maxHeight = '0px'; });
@@ -562,9 +586,38 @@ views.history = () => {
   if (cur) list += '</div></div>';
   if (ss.length) list += '<div class="section-f">Glisse une séance vers la gauche pour la supprimer.</div>';
   return `<header class="large"><div><h1>Historique</h1></div></header>
-    <div class="card"><div class="grid2"><div class="metric"><span class="k">Séances ce mois-ci</span><span class="v">${ms.length}</span></div><div class="metric"><span class="k">Volume ce mois-ci</span><span class="v">${nf(ms.reduce((a, s) => a + sessionVolume(s), 0) / 1000, 1)}<small>t</small></span></div></div></div>
+    ${calendarCard(ss)}
     ${list || '<div class="card"><div class="empty">Tes séances terminées apparaîtront ici.</div></div>'}`;
 };
+
+// Calendrier du mois : un rond de couleur sur chaque jour d'entraînement (comme l'app Forme)
+function calendarCard(ss) {
+  const nowM = dkey().slice(0, 7);
+  const m = ui.calMonth || nowM;
+  const [y, mo] = m.split('-').map(Number);
+  const first = new Date(y, mo - 1, 1), days = new Date(y, mo, 0).getDate();
+  const lead = (first.getDay() + 6) % 7;
+  const byDay = {};
+  ss.forEach((s) => { if (s.date.startsWith(m)) (byDay[s.date] = byDay[s.date] || []).push(s); });
+  const ms = ss.filter((s) => s.date.startsWith(m));
+  const vol = ms.reduce((a, s) => a + sessionVolume(s), 0);
+  const today = dkey();
+  let cells = ['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((d) => `<span class="cal-wd">${d}</span>`).join('');
+  for (let k = 0; k < lead; k++) cells += '<span></span>';
+  for (let d = 1; d <= days; d++) {
+    const k = `${m}-${String(d).padStart(2, '0')}`, list = byDay[k];
+    const cls = `cal-d${list ? ' on' : ''}${k === today ? ' today' : ''}${k > today ? ' future' : ''}`;
+    cells += list ? `<button class="${cls}" data-a="sessionOpen" data-id="${list[list.length - 1].id}" aria-label="${d}, ${esc(list.map((s) => s.name).join(', '))}">${d}</button>` : `<span class="${cls}">${d}</span>`;
+  }
+  const title = cap(first.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }));
+  const chevL = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>';
+  const chevR = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>';
+  return `<div class="card cal">
+    <div class="cal-h"><button class="cal-nav" data-a="calNav" data-v="-1" aria-label="Mois précédent">${chevL}</button><div class="cal-t">${title}</div><button class="cal-nav" data-a="calNav" data-v="1" aria-label="Mois suivant" ${m >= nowM ? 'disabled' : ''}>${chevR}</button></div>
+    <div class="cal-g">${cells}</div>
+    <div class="cal-f"><span><b>${ms.length}</b> séance${ms.length > 1 ? 's' : ''}</span><span><b>${nf(vol / 1000, 1)}</b> t soulevées</span></div>
+  </div>`;
+}
 
 // ---------- Vue Suivi ----------
 views.track = () => {
@@ -929,13 +982,14 @@ function renderLive() {
   root.innerHTML = `<div class="live"><div class="live-head"><div class="in">
       <div class="left"><button class="icon-btn hb" data-a="liveMin" aria-label="Réduire la séance">${ICON.down}</button>
       <div class="mid">${(() => { const [a, ...b] = L.name.split(/\s·\s/); return b.length ? `<div class="k">${esc(a)}</div><div class="n">${esc(b.join(' · '))}</div>` : `<div class="n">${esc(L.name)}</div>`; })()}</div>
-      </div><div class="tpill" aria-label="Durée de la séance">${ICON.stopwatch}<span class="clock" id="clock">${fmtClock((Date.now() - L.startedAt) / 1000)}</span></div>
+      </div><div class="tpill" aria-label="Durée de la séance"><svg class="tp-ring" aria-hidden="true"><rect class="bg"/><rect class="fg"/></svg>${ICON.stopwatch}<span class="clock" id="clock">${fmtClock((Date.now() - L.startedAt) / 1000)}</span></div>
       <div class="right"><div class="cap"><button class="quit" data-a="liveCancel" aria-label="Abandonner la séance">${lineIcon('xmark', 22)}</button><button class="done" data-a="liveFinish" aria-label="Terminer la séance">${ICON.check}</button></div></div></div></div>
     <div class="live-body">${groupAbs(L.exercises, liveExCard, liveCircuit) || '<div class="exc"><div class="empty">Ajoute ton premier exercice.</div></div>'}
       <button class="btn add-ex" data-a="liveAddEx">${lineIcon('plus', 18)}Ajouter un exercice</button>
       <button class="btn filled block" data-a="liveFinish">${ICON.check}Terminer</button>
       <button class="btn red block" data-a="liveCancel">Abandonner la séance</button></div></div>`;
   root.querySelector('.live').scrollTop = sc;
+  drawPillRing();
   if (opening && !reduceMotion()) { const lv = root.querySelector('.live'); lv.classList.add('enter'); lv.addEventListener('animationend', () => lv.classList.remove('enter'), { once: true }); }
   renderRest();
 }
@@ -1008,6 +1062,25 @@ function morph(sel, change) {
   const done = () => { el.style.height = ''; el.style.overflow = ''; el.style.transition = ''; el.classList.remove('shrink', 'grow'); };
   el.addEventListener('transitionend', (ev) => { if (ev.propertyName === 'height') done(); }, { once: false });
   setTimeout(done, 700);
+}
+
+// Avancement de la séance : le contour de la pilule ⏱ se remplit au fil des exercices terminés
+function drawPillRing() {
+  const pill = $('.live .tpill'); if (!pill || !S.live) return;
+  const X = S.live.exercises, total = X.length;
+  const done = X.filter((e) => e.sets.length && e.sets.every((s) => s.done)).length;
+  const f = total ? done / total : 0;
+  const w = pill.clientWidth, h = pill.clientHeight; if (!w || !h) return;
+  const sw = 2.5, x = sw / 2 + 0.5, rw = w - 2 * x, rh = h - 2 * x, r = rh / 2;
+  const P = 2 * (rw - 2 * r) + 2 * Math.PI * r, L = P * f;
+  pill.querySelectorAll('.tp-ring rect').forEach((el) => {
+    el.setAttribute('x', x); el.setAttribute('y', x); el.setAttribute('width', rw); el.setAttribute('height', rh); el.setAttribute('rx', r); el.setAttribute('ry', r);
+  });
+  const fg = pill.querySelector('.tp-ring .fg');
+  fg.style.strokeDasharray = `${L} ${P - L + 0.01}`;
+  fg.style.strokeDashoffset = `${-(rw / 2 - r)}`; // départ en haut au centre
+  pill.classList.toggle('full', f >= 1);
+  pill.setAttribute('aria-label', `Durée de la séance, ${done} exercice${done > 1 ? 's' : ''} terminé${done > 1 ? 's' : ''} sur ${total}`);
 }
 
 // ---------- Chrono de gainage (ex. planche latérale : 30 s, change de côté, 30 s) ----------
@@ -1092,6 +1165,7 @@ function finishWorkout() {
   const s = { id: L.id, date: dkey(new Date(L.startedAt)), startedAt: L.startedAt, duration: Math.round((Date.now() - L.startedAt) / 1000), name: L.name, programId: L.programId, dayId: L.dayId, exercises, prs };
   if (exercises.length) S.sessions.push(s);
   const newWeek = !!(exercises.length && progL && wasDone > 0 && doneThisWeek(progL).size === 1);
+  const weekDone = !!(exercises.length && progL && progL.days.length && wasDone < progL.days.length && doneThisWeek(progL).size >= progL.days.length);
   S.live = null;
   try { if (wl) wl.release(); } catch (e) { /* rien */ }
   save(true); closeAllSheets(); render();
@@ -1099,10 +1173,13 @@ function finishWorkout() {
   openSheet({
     render: () => `${sheetHead('')}<div style="text-align:center" class="stack"><h2>Séance terminée</h2><p class="muted small" style="margin:0">${esc(s.name)}</p></div>
       <div class="card"><div class="grid2"><div class="metric"><span class="k">Durée</span><span class="v">${fmtDur(s.duration)}</span></div><div class="metric"><span class="k">Volume</span><span class="v">${nf(sessionVolume(s))}<small>kg</small></span></div></div>
+      ${weekDone ? `<div class="row"><span class="pill pr" style="background:var(--green);color:#fff">Semaine terminée</span><span class="small">${progL.days.length} séances sur ${progL.days.length}, bravo !</span></div>` : ''}
       ${newWeek ? `<div class="row"><span class="pill pr" style="background:var(--blue);color:#fff">Nouvelle semaine</span><span class="small">C’est reparti : le compteur repart à zéro.</span></div>` : ''}
       ${prs.length ? `<div class="row"><span class="pill pr">Record</span><span class="small">${prs.map((id) => esc(exById(id).name)).join(', ')}</span></div>` : ''}</div>
       <button class="btn filled block" data-a="closeSheet">OK</button>`,
   });
+  haptic();
+  if (prs.length || weekDone) setTimeout(celebrate, 280);
 }
 
 // ---------- Fenêtres métier ----------
@@ -1245,7 +1322,8 @@ function settingsSheet() {
         <div class="fr"><label for="s-ios">Utiliser le minuteur de l’iPhone</label><input type="checkbox" class="switch" id="s-ios" data-change="iosTimer" ${S.settings.iosTimer ? 'checked' : ''}></div></div>
         <div class="group" style="margin-top:8px">${cell({ a: 'timerGuide', t: 'Créer le raccourci (une seule fois)' })}</div>
         <div class="section-f">Le repos s’affiche dans la Dynamic Island et l’iPhone sonne quand c’est le moment de reprendre, même verrouillé.</div></div>
-      <div class="section"><div class="section-h">Apparence</div><div class="segment">${[['auto', 'Auto'], ['light', 'Clair'], ['dark', 'Sombre']].map(([v, n]) => `<button class="${S.settings.theme === v ? 'on' : ''}" data-a="theme" data-v="${v}">${n}</button>`).join('')}</div></div>
+      <div class="section"><div class="section-h">Apparence</div><div class="segment">${[['auto', 'Auto'], ['light', 'Clair'], ['dark', 'Sombre']].map(([v, n]) => `<button class="${S.settings.theme === v ? 'on' : ''}" data-a="theme" data-v="${v}">${n}</button>`).join('')}</div>
+        <div class="accents" role="radiogroup" aria-label="Couleur principale">${ACCENTS.map((a) => `<button class="sw${(S.settings.accent || 'blue') === a.id ? ' on' : ''}" role="radio" aria-checked="${(S.settings.accent || 'blue') === a.id}" aria-label="${a.name}" data-a="accent" data-v="${a.id}" style="--c:${a.light};--cd:${a.dark}"></button>`).join('')}</div></div>
       <div class="section"><div class="section-h">Coach IA</div><div class="group">${cell({ a: 'aiSummary', t: '<span style="color:var(--blue)">Copier pour mon coach IA</span>', chev: false })}</div>
         <div class="section-f">Copie un résumé de tes mesures, de ton programme et de tes séances. Colle-le dans Claude pour demander conseil.</div></div>
       <div class="section"><div class="section-h">Sauvegarde</div><div class="group">${cell({ a: 'exportData', t: '<span style="color:var(--blue)">Exporter mes données</span>', chev: false })}<label class="cell" style="cursor:pointer"><span class="main"><span class="t" style="color:var(--blue)">Importer une sauvegarde</span></span><input class="vh" type="file" accept="application/json,.json" data-change="importData"></label></div>
@@ -1333,7 +1411,18 @@ function applyTheme() {
   if (t === 'auto') document.documentElement.removeAttribute('data-theme'); else document.documentElement.setAttribute('data-theme', t);
   const dark = t === 'dark' || (t === 'auto' && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
   const m = $('meta[name="theme-color"]'); if (m) m.setAttribute('content', dark ? '#121212' : '#f2f2f2');
+  const ac = ACCENTS.find((a) => a.id === S.settings.accent);
+  if (ac && ac.id !== 'blue') document.documentElement.style.setProperty('--blue', dark ? ac.dark : ac.light);
+  else document.documentElement.style.removeProperty('--blue');
 }
+// Couleurs principales au choix (teintes système d'Apple, version claire / sombre)
+const ACCENTS = [
+  { id: 'blue', name: 'Bleu', light: '#007aff', dark: '#0a84ff' },
+  { id: 'indigo', name: 'Indigo', light: '#5856d6', dark: '#5e5ce6' },
+  { id: 'orange', name: 'Orange', light: '#ff9500', dark: '#ff9f0a' },
+  { id: 'pink', name: 'Rose', light: '#ff2d55', dark: '#ff375f' },
+  { id: 'teal', name: 'Bleu canard', light: '#0a84a0', dark: '#40c8e0' },
+];
 
 // ---------- Actions ----------
 const A = {
@@ -1381,7 +1470,12 @@ const A = {
     if (s.reps === '') s.reps = prev ? String(prev.reps) : j > 0 && e.sets[j - 1].reps !== '' ? e.sets[j - 1].reps : (e.repsT || '');
     if (!(num(s.reps) > 0)) { s.reps = ''; toast('Indique le nombre de répétitions'); const i = $(`#ls-${el.dataset.e}-${j}-reps`); if (i) i.focus(); return; }
     if (s.kg === '') s.kg = '0';
-    s.done = true;
+    s.done = true; haptic();
+    // Record battu pendant la séance ?
+    if (!e.prShown && num(s.kg) > 0) {
+      const h = exerciseHistory(e.exId), best = h.length ? Math.max(...h.map((x) => x.best)) : 0;
+      if (best > 0 && e1rm(num(s.kg), Math.round(num(s.reps))) > best + 0.01) { e.prShown = true; setTimeout(() => { celebrate(); toast(`Record battu : ${exById(e.exId).name}`); }, 120); }
+    }
     // En circuit : pas de repos entre les exercices d'un même tour, le repos part à la fin du tour
     const circ = absCircuitOf(+el.dataset.e);
     const tourLeft = circ && circ.some((i) => L.exercises[i].sets[j] && !L.exercises[i].sets[j].done);
@@ -1409,7 +1503,7 @@ const A = {
       if (!(num(s.reps) > 0)) { s.reps = ''; save(); renderLive(); toast(`Indique les reps de ${exById(e.exId).name}`); const f = $(`#ls-${i}-${k}-reps`); if (f) f.focus(); return; }
       if (s.kg === '') s.kg = '0';
     }
-    c.forEach((i) => { const s = L.exercises[i].sets[k]; if (s) s.done = true; });
+    c.forEach((i) => { const s = L.exercises[i].sets[k]; if (s) s.done = true; }); haptic();
     const e = L.exercises[c[c.length - 1]];
     L.restTotal = e.rest; L.restEnd = Date.now() + e.rest * 1000; L.restPause = null;
     save(); morph(`.live [data-tour="${c[0]}-${k}"]`, renderLive);
@@ -1482,6 +1576,13 @@ const A = {
   progRename() { const p = activeProgram(); textSheet({ title: 'Renommer', label: 'Nom', value: p.name, onOk: (v) => { p.name = v; save(); closeAllSheets(); render(); } }); },
   progDelete() { const p = activeProgram(); confirmSheet({ title: `Supprimer « ${esc(p.name)} » ?`, text: 'Tes séances passées restent dans l’historique.', onOk: () => { S.programs = S.programs.filter((x) => x.id !== p.id); S.activeProgramId = S.programs[0] ? S.programs[0].id : null; save(); closeAllSheets(); render(); } }); },
   sessionOpen(el) { sessionSheet(el.dataset.id); },
+  calNav(el) {
+    const [y, mo] = (ui.calMonth || dkey().slice(0, 7)).split('-').map(Number);
+    const d = new Date(y, mo - 1 + Number(el.dataset.v), 1);
+    const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    if (k > dkey().slice(0, 7)) return;
+    ui.calMonth = k; render();
+  },
   sessionDel() { const c = topSheet(); confirmSheet({ title: 'Supprimer cette séance ?', onOk: () => { S.sessions = S.sessions.filter((s) => s.id !== c.sid); save(); closeAllSheets(); render(); } }); },
 
   chart(el) { ui.chart = el.dataset.v; render(); },
@@ -1491,6 +1592,7 @@ const A = {
   checkDel() { const c = topSheet(); confirmSheet({ title: 'Supprimer cette mesure ?', onOk: () => { S.checks = S.checks.filter((x) => x.id !== c.id); save(); closeAllSheets(); render(); } }); },
 
   theme(el) { S.settings.theme = el.dataset.v; applyTheme(); save(); paintSheet(); },
+  accent(el) { S.settings.accent = el.dataset.v; applyTheme(); save(); haptic(); paintSheet(); render(); },
   async aiSummary() {
     const txt = aiSummaryText();
     let ok = false;
@@ -1585,6 +1687,7 @@ setInterval(() => {
   const L = S.live; if (!L) return;
   const el = ui.liveOpen ? $('#clock') : $('#liveBanner .clock');
   if (el) el.textContent = fmtClock((Date.now() - L.startedAt) / 1000);
+  if (ui.liveOpen) drawPillRing();
   if (L.restEnd && L.restPause != null) L.restEnd = Date.now() + L.restPause; // repos en pause : le temps restant ne bouge pas
   if (L.restEnd && Date.now() >= L.restEnd) { L.restEnd = null; save(); beep(); toast('Repos terminé, c’est reparti !'); }
   renderRest();

@@ -981,3 +981,49 @@ body.has-mini #main.v-train { min-height: calc(var(--screen-h, 100dvh) - env(saf
 /* Bas de séance : « Ajouter un exercice » au centre, « Terminer la séance » en bouton principal */
 .live-body .btn.add-ex { align-self: center; gap: 6px; min-height: 44px; padding: 0 18px; color: var(--blue); font-weight: 600; }
 .live-body .btn.filled.block svg { width: 18px; height: 18px; margin-right: 6px; }
+
+/* ---------- Confettis (record, semaine terminée) ---------- */
+.confetti { position: fixed; left: 50%; top: 38%; width: 0; height: 0; z-index: 200; pointer-events: none; }
+.confetti i { position: absolute; width: 8px; height: 12px; border-radius: 2px; opacity: 0;
+  animation: conf var(--d, 1.2s) cubic-bezier(.15,.7,.3,1) forwards; }
+@keyframes conf {
+  0% { opacity: 1; transform: translate(0, 0) rotate(0) scale(.6); }
+  70% { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--x), calc(var(--y) + 220px)) rotate(var(--r)) scale(1); }
+}
+
+/* ---------- Anneau d'avancement autour de la pilule ⏱ ---------- */
+.live-head .tpill { position: relative; }
+.tp-ring { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.tp-ring rect { fill: none; stroke-width: 2.5; }
+.tp-ring .bg { stroke: color-mix(in srgb, var(--label) 10%, transparent); }
+.tp-ring .fg { stroke: var(--blue); stroke-linecap: round; transition: stroke-dasharray .6s cubic-bezier(.32,.72,0,1), stroke .3s; }
+.tpill.full .tp-ring .fg { stroke: var(--green); }
+.tpill.full > svg:not(.tp-ring) { color: var(--green); }
+
+/* ---------- Calendrier (Historique) ---------- */
+.cal { display: flex; flex-direction: column; gap: 12px; }
+.cal-h { display: flex; align-items: center; justify-content: space-between; }
+.cal-t { font-size: 18px; font-weight: 700; }
+.cal-nav { width: 36px; height: 36px; border-radius: 50%; border: 0; background: transparent; color: var(--blue); display: inline-flex; align-items: center; justify-content: center; padding: 0; }
+.cal-nav:disabled { color: var(--label-3, rgba(127,127,127,.4)); }
+.cal-g { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px 0; justify-items: center; }
+.cal-wd { font-size: 12px; font-weight: 600; color: var(--label-2); padding-bottom: 2px; }
+.cal-d { width: 36px; height: 36px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 500;
+  font-variant-numeric: tabular-nums; color: var(--label); border: 0; background: transparent; padding: 0; font-family: inherit; }
+.cal-d.future { color: var(--label-3, rgba(127,127,127,.45)); }
+.cal-d.today { color: var(--blue); font-weight: 700; box-shadow: inset 0 0 0 1.5px var(--blue); }
+.cal-d.on { background: var(--blue); color: #fff; font-weight: 700; }
+.cal-d.on.today { box-shadow: 0 0 0 2px var(--card), 0 0 0 3.5px var(--blue); }
+button.cal-d:active { transform: scale(.92); }
+.cal-f { display: flex; justify-content: center; gap: 22px; font-size: 14px; color: var(--label-2); padding-top: 4px; border-top: 0.5px solid var(--sep); padding-top: 12px; }
+.cal-f b { color: var(--label); font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* ---------- Choix de la couleur (Réglages) ---------- */
+.accents { display: flex; justify-content: center; gap: 18px; margin-top: 14px; }
+.accents .sw { width: 34px; height: 34px; border-radius: 50%; border: 0; padding: 0; background: var(--c); box-shadow: inset 0 0 0 0.5px rgba(0,0,0,.15); cursor: pointer; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .accents .sw { background: var(--cd); } }
+:root[data-theme="dark"] .accents .sw { background: var(--cd); }
+.accents .sw.on { box-shadow: 0 0 0 2.5px var(--bg), 0 0 0 5px var(--label-2); }
+.live-head .tpill { border-color: transparent !important; }
+.tp-ring .bg { stroke: color-mix(in srgb, var(--label) 13%, transparent); }
