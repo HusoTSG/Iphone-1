@@ -95,9 +95,9 @@ function celebrate() {
   document.body.appendChild(box); setTimeout(() => box.remove(), 1800);
 }
 // Logo HusoFit (haltère aux disques ovales), en couleur du texte
-const MARK_SVG = '<svg viewBox="0 0 190 120" width="54" height="34" fill="currentColor"><rect x="10" y="53" width="160" height="14" rx="7"/><ellipse cx="40" cy="60" rx="13" ry="26" transform="rotate(-16 40 60)"/><ellipse cx="57" cy="60" rx="16" ry="38" transform="rotate(-16 57 60)"/><ellipse cx="77" cy="60" rx="18" ry="51" transform="rotate(-16 77 60)"/><ellipse cx="126" cy="60" rx="17" ry="43" transform="rotate(-16 126 60)"/><ellipse cx="145" cy="60" rx="14" ry="31" transform="rotate(-16 145 60)"/><ellipse cx="161" cy="60" rx="10" ry="20" transform="rotate(-16 161 60)"/></svg>';
+const MARK_SVG = '<span class="mark-mask"></span>';
 // Version de l'appli : doit être la même que VERSION dans sw.js
-const APP_VERSION = 'husofit-v80';
+const APP_VERSION = 'husofit-v81';
 // Mise à jour automatique : si une nouvelle version est en ligne, l'appli se recharge toute seule (données gardées)
 function checkUpdate() {
   if (!/^https?:/.test(location.protocol)) return;
