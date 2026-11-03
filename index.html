@@ -26,8 +26,28 @@
 <link rel="apple-touch-startup-image" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="icons/splash/828x1792.jpg">
 <link rel="apple-touch-startup-image" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="icons/splash/750x1334.jpg">
 <link rel="stylesheet" href="styles.css">
+<style>
+/* Animation de lancement : le personnage fait une flexion, saute, puis l'écran bleu s'efface sur l'appli */
+#intro { position: fixed; inset: 0; z-index: 1000; pointer-events: none; background: linear-gradient(180deg, #0a84ff, #0060e0);
+  display: flex; align-items: center; justify-content: center; animation: intro-out .38s cubic-bezier(.4,0,.2,1) .9s forwards; }
+#intro i { display: block; height: 30vmin; aspect-ratio: 1120 / 1728; background: #fff;
+  -webkit-mask: url('icons/logo.png') center / contain no-repeat; mask: url('icons/logo.png') center / contain no-repeat;
+  transform-origin: 50% 100%; animation: intro-jump .9s cubic-bezier(.33,.9,.4,1) both; }
+@keyframes intro-jump {
+  0%, 16% { transform: none; }
+  34% { transform: translateY(3%) scale(1.07, .86); }
+  58% { transform: translateY(-17%) scale(.96, 1.06); }
+  76% { transform: translateY(0) scale(1.04, .95); }
+  100% { transform: none; }
+}
+@keyframes intro-out { to { opacity: 0; transform: scale(1.08); } }
+@media (prefers-reduced-motion: reduce) { #intro { animation: intro-out .3s ease .35s forwards !important; } #intro i { animation: none !important; } }
+</style>
+
 </head>
 <body>
+<div id="intro" aria-hidden="true"><i></i></div>
+<script>setTimeout(function(){var e=document.getElementById("intro");if(e)e.remove();},1400);</script>
 <div class="ambient" aria-hidden="true"></div>
 <main id="main" aria-live="polite"></main>
 <div class="tabbar"><nav aria-label="Navigation principale">

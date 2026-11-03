@@ -95,7 +95,7 @@ function celebrate() {
   document.body.appendChild(box); setTimeout(() => box.remove(), 1800);
 }
 // Version de l'appli : doit être la même que VERSION dans sw.js
-const APP_VERSION = 'husofit-v83';
+const APP_VERSION = 'husofit-v84';
 // Mise à jour automatique : si une nouvelle version est en ligne, l'appli se recharge toute seule (données gardées)
 function checkUpdate() {
   if (!/^https?:/.test(location.protocol)) return;
