@@ -94,8 +94,10 @@ function celebrate() {
   }
   document.body.appendChild(box); setTimeout(() => box.remove(), 1800);
 }
+// Logo HusoFit (haltère aux disques ovales), en couleur du texte
+const MARK_SVG = '<svg viewBox="0 0 190 120" width="54" height="34" fill="currentColor"><rect x="10" y="53" width="160" height="14" rx="7"/><ellipse cx="40" cy="60" rx="13" ry="26" transform="rotate(-16 40 60)"/><ellipse cx="57" cy="60" rx="16" ry="38" transform="rotate(-16 57 60)"/><ellipse cx="77" cy="60" rx="18" ry="51" transform="rotate(-16 77 60)"/><ellipse cx="126" cy="60" rx="17" ry="43" transform="rotate(-16 126 60)"/><ellipse cx="145" cy="60" rx="14" ry="31" transform="rotate(-16 145 60)"/><ellipse cx="161" cy="60" rx="10" ry="20" transform="rotate(-16 161 60)"/></svg>';
 // Version de l'appli : doit être la même que VERSION dans sw.js
-const APP_VERSION = 'husofit-v79';
+const APP_VERSION = 'husofit-v80';
 // Mise à jour automatique : si une nouvelle version est en ligne, l'appli se recharge toute seule (données gardées)
 function checkUpdate() {
   if (!/^https?:/.test(location.protocol)) return;
@@ -1323,12 +1325,13 @@ function settingsSheet() {
         <div class="group" style="margin-top:8px">${cell({ a: 'timerGuide', t: 'Créer le raccourci (une seule fois)' })}</div>
         <div class="section-f">Le repos s’affiche dans la Dynamic Island et l’iPhone sonne quand c’est le moment de reprendre, même verrouillé.</div></div>
       <div class="section"><div class="section-h">Apparence</div><div class="segment">${[['auto', 'Auto'], ['light', 'Clair'], ['dark', 'Sombre']].map(([v, n]) => `<button class="${S.settings.theme === v ? 'on' : ''}" data-a="theme" data-v="${v}">${n}</button>`).join('')}</div>
-        <div class="accents" role="radiogroup" aria-label="Couleur principale">${ACCENTS.map((a) => `<button class="sw${(S.settings.accent || 'blue') === a.id ? ' on' : ''}" role="radio" aria-checked="${(S.settings.accent || 'blue') === a.id}" aria-label="${a.name}" data-a="accent" data-v="${a.id}" style="--c:${a.light};--cd:${a.dark}"></button>`).join('')}</div></div>
+        <div class="accents" role="radiogroup" aria-label="Couleur principale">${ACCENTS.map((a) => `<button class="sw${(S.settings.accent || 'red') === a.id ? ' on' : ''}" role="radio" aria-checked="${(S.settings.accent || 'red') === a.id}" aria-label="${a.name}" data-a="accent" data-v="${a.id}" style="--c:${a.light};--cd:${a.dark}"></button>`).join('')}</div></div>
       <div class="section"><div class="section-h">Coach IA</div><div class="group">${cell({ a: 'aiSummary', t: '<span style="color:var(--blue)">Copier pour mon coach IA</span>', chev: false })}</div>
         <div class="section-f">Copie un résumé de tes mesures, de ton programme et de tes séances. Colle-le dans Claude pour demander conseil.</div></div>
       <div class="section"><div class="section-h">Sauvegarde</div><div class="group">${cell({ a: 'exportData', t: '<span style="color:var(--blue)">Exporter mes données</span>', chev: false })}<label class="cell" style="cursor:pointer"><span class="main"><span class="t" style="color:var(--blue)">Importer une sauvegarde</span></span><input class="vh" type="file" accept="application/json,.json" data-change="importData"></label></div>
         <div class="section-f">Tes données restent sur cet iPhone. Exporte-les de temps en temps vers Fichiers ou iCloud Drive.</div></div>
       <div class="group"><button class="cell danger" data-a="wipe">Effacer toutes les données</button></div>
+      <div class="brand-foot" aria-hidden="true">${MARK_SVG}</div>
       <div class="section-f" style="text-align:center">HusoFit · version ${APP_VERSION.replace('husofit-v', '')}</div>`,
   });
 }
@@ -1411,12 +1414,15 @@ function applyTheme() {
   if (t === 'auto') document.documentElement.removeAttribute('data-theme'); else document.documentElement.setAttribute('data-theme', t);
   const dark = t === 'dark' || (t === 'auto' && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
   const m = $('meta[name="theme-color"]'); if (m) m.setAttribute('content', dark ? '#121212' : '#f2f2f2');
-  const ac = ACCENTS.find((a) => a.id === S.settings.accent);
-  if (ac && ac.id !== 'blue') document.documentElement.style.setProperty('--blue', dark ? ac.dark : ac.light);
+  const ac = ACCENTS.find((a) => a.id === (S.settings.accent || 'red')) || ACCENTS[0];
+  if (ac.id !== 'blue') document.documentElement.style.setProperty('--blue', dark ? ac.dark : ac.light);
   else document.documentElement.style.removeProperty('--blue');
+  document.documentElement.setAttribute('data-accent', ac.id);
+  if (m) m.setAttribute('content', dark ? '#0a0a0a' : '#f2f2f2');
 }
 // Couleurs principales au choix (teintes système d'Apple, version claire / sombre)
 const ACCENTS = [
+  { id: 'red', name: 'Rouge HusoFit', light: '#e8392a', dark: '#ff4d3a' },
   { id: 'blue', name: 'Bleu', light: '#007aff', dark: '#0a84ff' },
   { id: 'indigo', name: 'Indigo', light: '#5856d6', dark: '#5e5ce6' },
   { id: 'orange', name: 'Orange', light: '#ff9500', dark: '#ff9f0a' },
@@ -1712,6 +1718,7 @@ async function boot() {
   await Store.open();
   const saved = await Store.get('state');
   if (saved && typeof saved === 'object') S = migrate(saved);
+  if (!S.settings.mood1) { S.settings.accent = 'red'; S.settings.mood1 = true; } // nouvelle ambiance noir + rouge
   const msg = syncCoach();
   save();
   initTabbar();

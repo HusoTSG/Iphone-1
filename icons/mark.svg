@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 190 120" fill="#fff">
+  <rect x="10" y="53" width="160" height="14" rx="7"/>
+  <g transform="rotate(-16 40 60)"><ellipse cx="40" cy="60" rx="13" ry="26"/></g>
+  <g transform="rotate(-16 57 60)"><ellipse cx="57" cy="60" rx="16" ry="38"/></g>
+  <g transform="rotate(-16 77 60)"><ellipse cx="77" cy="60" rx="18" ry="51"/></g>
+  <g transform="rotate(-16 126 60)"><ellipse cx="126" cy="60" rx="17" ry="43"/></g>
+  <g transform="rotate(-16 145 60)"><ellipse cx="145" cy="60" rx="14" ry="31"/></g>
+  <g transform="rotate(-16 161 60)"><ellipse cx="161" cy="60" rx="10" ry="20"/></g>
+</svg>

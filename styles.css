@@ -1027,3 +1027,38 @@ button.cal-d:active { transform: scale(.92); }
 .accents .sw.on { box-shadow: 0 0 0 2.5px var(--bg), 0 0 0 5px var(--label-2); }
 .live-head .tpill { border-color: transparent !important; }
 .tp-ring .bg { stroke: color-mix(in srgb, var(--label) 13%, transparent); }
+
+/* ===== Ambiance HusoFit : noir profond, lueur rouge en diagonale, léger grain ===== */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --bg: #0a0a0a; --card: rgba(28, 28, 30, 0.92); --bar: rgba(10, 10, 10, 0.9); --glass-bg: rgba(38, 38, 40, 0.58); }
+}
+:root[data-theme="dark"] { --bg: #0a0a0a; --card: rgba(28, 28, 30, 0.92); --bar: rgba(10, 10, 10, 0.9); --glass-bg: rgba(38, 38, 40, 0.58); }
+.ambient { overflow: hidden; }
+.ambient::before, .ambient::after, .live::before { content: ''; position: absolute; pointer-events: none; }
+/* La lueur : bandes rouges floues en diagonale, en haut à gauche */
+.ambient::before {
+  left: -30%; top: -22%; width: 120%; height: 70%; transform: rotate(38deg); transform-origin: 30% 40%;
+  background:
+    linear-gradient(180deg, transparent 0 34%, rgba(255, 72, 52, .55) 40%, rgba(255, 84, 60, .42) 47%, transparent 54% 100%),
+    linear-gradient(180deg, transparent 0 56%, rgba(255, 64, 46, .38) 61%, transparent 68% 100%);
+  -webkit-mask-image: radial-gradient(60% 55% at 40% 50%, #000 30%, transparent 75%); mask-image: radial-gradient(60% 55% at 40% 50%, #000 30%, transparent 75%);
+  filter: blur(34px); opacity: 0;
+}
+/* Le grain, partout, très léger */
+.ambient::after { inset: 0; background: url('icons/grain.png') repeat; background-size: 128px 128px; opacity: 0; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .ambient::before { opacity: .9; } :root:not([data-theme="light"]) .ambient::after { opacity: 1; } }
+:root[data-theme="dark"] .ambient::before { opacity: .9; }
+:root[data-theme="dark"] .ambient::after { opacity: 1; }
+/* Écran de séance : même ambiance */
+.live { isolation: isolate; }
+.live::before { position: fixed; inset: 0; z-index: -1; opacity: 0;
+  background: radial-gradient(70% 30% at 8% 0%, rgba(255, 70, 50, .28), transparent 70%), url('icons/grain.png') repeat; background-size: auto, 128px 128px; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .live::before { opacity: 1; } }
+:root[data-theme="dark"] .live::before { opacity: 1; }
+/* Avec le rouge HusoFit : boutons principaux blancs (comme l'astérisque de l'inspiration), le rouge reste pour l'accent */
+:root[data-accent="red"] .btn.filled { background: var(--label) !important; color: var(--bg) !important; border-color: transparent !important; }
+:root[data-accent="red"] .btn.filled svg { color: var(--bg); }
+:root[data-accent="red"] .live-head .cap .done { color: var(--label); }
+:root[data-accent="red"] .next-pill { background: var(--blue); color: #fff; }
+.brand-foot { display: flex; justify-content: center; color: var(--label-2); margin-top: 8px; opacity: .8; }
+.tabbar button svg[viewBox="0 0 190 120"] { width: 34px; height: 28px; }
