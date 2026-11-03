@@ -1028,9 +1028,4 @@ button.cal-d:active { transform: scale(.92); }
 .live-head .tpill { border-color: transparent !important; }
 .tp-ring .bg { stroke: color-mix(in srgb, var(--label) 13%, transparent); }
 
-.brand-foot { display: flex; justify-content: center; color: var(--label-2); margin-top: 8px; opacity: .8; }
 
-/* Logo HusoFit (image de l'utilisateur) utilisé comme masque : il prend la couleur du texte */
-.tab-mark, .mark-mask { display: inline-block; background: currentColor; -webkit-mask: url('icons/mark.png') center / contain no-repeat; mask: url('icons/mark.png') center / contain no-repeat; }
-.tab-mark { width: 36px; height: 25px; }
-.mark-mask { width: 58px; height: 42px; }

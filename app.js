@@ -94,10 +94,8 @@ function celebrate() {
   }
   document.body.appendChild(box); setTimeout(() => box.remove(), 1800);
 }
-// Logo HusoFit (haltère aux disques ovales), en couleur du texte
-const MARK_SVG = '<span class="mark-mask"></span>';
 // Version de l'appli : doit être la même que VERSION dans sw.js
-const APP_VERSION = 'husofit-v82';
+const APP_VERSION = 'husofit-v83';
 // Mise à jour automatique : si une nouvelle version est en ligne, l'appli se recharge toute seule (données gardées)
 function checkUpdate() {
   if (!/^https?:/.test(location.protocol)) return;
@@ -1331,7 +1329,6 @@ function settingsSheet() {
       <div class="section"><div class="section-h">Sauvegarde</div><div class="group">${cell({ a: 'exportData', t: '<span style="color:var(--blue)">Exporter mes données</span>', chev: false })}<label class="cell" style="cursor:pointer"><span class="main"><span class="t" style="color:var(--blue)">Importer une sauvegarde</span></span><input class="vh" type="file" accept="application/json,.json" data-change="importData"></label></div>
         <div class="section-f">Tes données restent sur cet iPhone. Exporte-les de temps en temps vers Fichiers ou iCloud Drive.</div></div>
       <div class="group"><button class="cell danger" data-a="wipe">Effacer toutes les données</button></div>
-      <div class="brand-foot" aria-hidden="true">${MARK_SVG}</div>
       <div class="section-f" style="text-align:center">HusoFit · version ${APP_VERSION.replace('husofit-v', '')}</div>`,
   });
 }
