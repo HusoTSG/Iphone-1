@@ -33,6 +33,7 @@ const ICON = {
   gear: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
   plates: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 12h20"/><rect x="5" y="5" width="3" height="14" rx="1"/><rect x="16" y="5" width="3" height="14" rx="1"/><rect x="8.5" y="8" width="2" height="8" rx="1"/><rect x="13.5" y="8" width="2" height="8" rx="1"/></svg>',
   more: '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><circle cx="5.5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="18.5" cy="12" r="1.9"/></svg>',
+  note: '<svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12.5c0 3.9-3.6 7-8 7-1.1 0-2.2-.2-3.1-.6L4.5 20l1.2-3.4C4.6 15.4 4 14 4 12.5c0-3.9 3.6-7 8-7s8 3.1 8 7z"/><path d="M8.5 11h7M8.5 14h4.5"/></svg>',
   stopwatch: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13.5" r="7.5"/><path d="M12 13.5V10M10 2.5h4M18.5 6.5l1.2-1.2"/></svg>',
   clock: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>',
   x: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
@@ -67,7 +68,7 @@ const Store = {
 
 // ---------- État ----------
 function defaultState() {
-  return { v: 2, settings: { rest: 90, theme: 'auto', bar: 20, iosTimer: false }, programs: [], activeProgramId: null, customExercises: [], sessions: [], live: null, checks: [], coachVersion: 0 };
+  return { v: 2, exNotes: {}, settings: { rest: 90, theme: 'auto', bar: 20, iosTimer: false }, programs: [], activeProgramId: null, customExercises: [], sessions: [], live: null, checks: [], coachVersion: 0 };
 }
 let S = defaultState();
 // Petite vibration au toucher. iPhone (iOS 18+) : on « touche » un interrupteur invisible, ce qui fait vibrer.
@@ -95,7 +96,7 @@ function celebrate() {
   document.body.appendChild(box); setTimeout(() => box.remove(), 1800);
 }
 // Version de l'appli : doit être la même que VERSION dans sw.js
-const APP_VERSION = 'husofit-v84';
+const APP_VERSION = 'husofit-v85';
 // Mise à jour automatique : si une nouvelle version est en ligne, l'appli se recharge toute seule (données gardées)
 function checkUpdate() {
   if (!/^https?:/.test(location.protocol)) return;
@@ -117,7 +118,7 @@ function save(now = false) { pushSync(); clearTimeout(saveTimer); if (now) retur
 // Passage de l'ancienne version (nutrition, habitudes…) à la version simplifiée
 function migrate(old) {
   const s = defaultState();
-  ['programs', 'activeProgramId', 'customExercises', 'sessions', 'live', 'checks', 'coachVersion'].forEach((k) => { if (old[k] !== undefined && old[k] !== null) s[k] = old[k]; });
+  ['programs', 'activeProgramId', 'customExercises', 'sessions', 'live', 'checks', 'coachVersion', 'exNotes'].forEach((k) => { if (old[k] !== undefined && old[k] !== null) s[k] = old[k]; });
   s.live = old.live || null;
   s.settings = Object.assign(defaultState().settings, old.settings || {});
   if (old.v !== 2) {
@@ -283,6 +284,11 @@ function aiSummaryText() {
   if (ids.length) {
     L.push('PROGRESSION (meilleure série : première fois → dernière fois)');
     ids.forEach((id) => { const a = per[id][0], b = per[id][per[id].length - 1]; L.push(`- ${exById(id).name} : ${kgs(a.kg)} kg × ${a.reps} (${d(a.date)}) → ${kgs(b.kg)} kg × ${b.reps} (${d(b.date)}), ${per[id].length} séance${per[id].length > 1 ? 's' : ''}`); });
+  }
+  const withNotes = Object.keys(S.exNotes || {}).filter((id) => (S.exNotes[id] || []).length);
+  if (withNotes.length) {
+    L.push(''); L.push('MES NOTES PAR EXERCICE');
+    withNotes.forEach((id) => notesFor(id).forEach((n) => L.push(`- ${exById(id).name} (${new Date(n.at).toLocaleDateString('fr-FR')}) : ${n.text.replace(/\s+/g, ' ')}`)));
   }
   return L.join('\n');
 }
@@ -792,7 +798,7 @@ function liveCircuit(idx) {
       const phR = prev ? prev.reps : k > 0 && e.sets[k - 1].reps !== '' ? e.sets[k - 1].reps : (e.repsT || '');
       const h = holdOf(e);
       const meta = h ? (h.sides > 1 ? 'chaque côté' : '') : cleanNote(e.note);
-      html += `<div class="tour-ex"><div class="tour-name"><button class="tn" data-a="exHist" data-e="${i}">${esc(ex.name)}</button>${meta ? `<span class="tm">${esc(meta)}</span>` : ''}${h && !s.done ? `<button class="tour-hold" data-a="holdStart" data-e="${i}" data-s="${k}" aria-label="Lancer le chrono">${ICON.stopwatch}${h.hold} s</button>` : ''}</div>
+      html += `<div class="tour-ex"><div class="tour-name"><button class="tn" data-a="exHist" data-e="${i}">${esc(ex.name)}</button>${noteBtn(e.exId, true)}${meta ? `<span class="tm">${esc(meta)}</span>` : ''}${h && !s.done ? `<button class="tour-hold" data-a="holdStart" data-e="${i}" data-s="${k}" aria-label="Lancer le chrono">${ICON.stopwatch}${h.hold} s</button>` : ''}</div>
         <div class="uf-row${s.done ? ' done' : ''}">
           <label class="uf"><input type="text" inputmode="numeric" id="ls-${i}-${k}-reps" value="${esc(s.reps)}" placeholder="${esc(phR)}" data-in="liveSet" data-e="${i}" data-s="${k}" data-f="reps" aria-label="${h ? 'Secondes' : 'Répétitions'} ${esc(ex.name)} tour ${k + 1}"><span class="u">${h ? 's' : 'reps'}</span></label>
           ${`<label class="uf"><input type="text" inputmode="decimal" id="ls-${i}-${k}-kg" value="${esc(s.kg)}" placeholder="${esc(phKg)}" data-in="liveSet" data-e="${i}" data-s="${k}" data-f="kg" aria-label="Charge ${esc(ex.name)} tour ${k + 1}"><span class="u">kg</span></label>`}
@@ -824,9 +830,12 @@ function liveExCard(e, i) {
   const lastKg = prev.length ? Math.max(...prev.map((x) => num(x.kg) || 0)) : 0;
   const showKg = lastKg || e.kg;
   const meta = [e.target ? esc(e.target) : '', showKg ? `<b>${nf(showKg, 2)} kg</b>` : '', note ? esc(note) : ''].filter(Boolean).join(' · ');
+  const notes = notesFor(e.exId), lastNote = notes[0];
   return `<div class="exc" data-ex="${i}"><div class="hd">${exIcon(ex)}<div class="grow"><h3>${esc(ex.name)}</h3>${meta ? `<div class="meta">${meta}</div>` : ''}</div>
+      ${noteBtn(e.exId)}
       <button class="icon-btn plain" data-a="exHist" data-e="${i}" aria-label="Historique et options">${ICON.clock}</button>
       ${allDone ? `<button class="icon-btn plain" data-a="liveCollapse" data-e="${i}" aria-label="Réduire">${ICON.up}</button>` : ''}</div>
+    ${lastNote ? `<button class="ex-note" data-a="exNotes" data-x="${e.exId}">${ICON.note}<span>${esc(lastNote.text)}</span></button>` : ''}
     <div class="sets uf-sets">${rows}</div>
     ${holdOf(e) && !allDone ? `<button class="btn hold-btn" data-a="holdStart" data-e="${i}">${ICON.stopwatch}Chrono ${holdOf(e).hold} s${holdOf(e).sides > 1 ? ' de chaque côté' : ''}</button>` : ''}
     <button class="link small" data-a="liveAddSet" data-e="${i}" style="align-self:flex-start;padding:0">+ Ajouter une série</button></div>`;
@@ -839,12 +848,45 @@ function exHistSheet(i) {
     render: () => `${sheetHead(esc(ex.name))}
       ${h.length ? `<div class="group">${h.map((x) => cell({ t: fmtShort(x.date), s: x.sets.map((s) => `${s.reps} × ${nf(s.kg, 2)} kg`).join('<br>'), chev: false })).join('')}</div>` : '<div class="empty" style="text-align:center">Pas encore d’historique pour cet exercice.</div>'}
       <div class="group">
+        ${cell({ a: 'exNotes', data: `data-x="${e.exId}"`, t: 'Notes', v: notesFor(e.exId).length ? String(notesFor(e.exId).length) : '' })}
         ${cell({ a: 'platesLive', data: `data-e="${i}"`, t: 'Disques à charger' })}
         ${e.sets.length > 1 ? cell({ a: 'liveDelSet', data: `data-e="${i}"`, t: 'Retirer la dernière série', chev: false }) : ''}
         <button class="cell danger" data-a="liveRemoveEx" data-e="${i}">Retirer de la séance</button>
       </div>`,
   });
 }
+
+// ---------- Notes par exercice : elles restent pour toujours, d'une séance à l'autre ----------
+function notesFor(exId) { return ((S.exNotes || {})[exId] || []).slice().sort((a, b) => b.at - a.at); }
+function noteBtn(exId, small = false) {
+  const n = notesFor(exId).length;
+  return `<button class="icon-btn plain note-btn${n ? ' has' : ''}${small ? ' sm' : ''}" data-a="exNotes" data-x="${exId}" aria-label="Notes${n ? ` (${n})` : ''}">${ICON.note}${n ? `<span class="nb">${n}</span>` : ''}</button>`;
+}
+const fmtNoteDate = (ms) => new Date(ms).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+function notesSheet(exId) {
+  const ex = exById(exId);
+  openSheet({
+    exId,
+    render: () => {
+      const list = notesFor(exId);
+      return `${sheetHead(esc(ex.name))}
+        <div class="note-new"><textarea id="note-new" rows="3" placeholder="Un détail à ne pas oublier : réglage de la machine, placement, sensation…"></textarea>
+        <button class="btn filled block" data-a="noteAdd">Ajouter la note</button></div>
+        ${list.length ? `<div class="section"><div class="section-h">${list.length} note${list.length > 1 ? 's' : ''}</div><div class="group">${list.map((n) => `<button class="cell note-cell" data-a="noteEdit" data-x="${exId}" data-id="${n.id}"><span class="main"><span class="t note-t">${esc(n.text)}</span><span class="s">${fmtNoteDate(n.at)}</span></span></button>`).join('')}</div><div class="section-f">Touche une note pour la modifier ou la supprimer.</div></div>` : '<div class="empty">Pas encore de note pour cet exercice.</div>'}`;
+    },
+  });
+}
+function noteEditSheet(exId, id) {
+  const n = ((S.exNotes || {})[exId] || []).find((x) => x.id === id); if (!n) return;
+  openSheet({
+    exId, noteId: id,
+    render: () => `${sheetHead('Modifier la note')}
+      <div class="note-new"><textarea id="note-edit" rows="5">${esc(n.text)}</textarea>
+      <button class="btn filled block" data-a="noteSave">Enregistrer</button></div>
+      <div class="group"><button class="cell danger" data-a="noteDel">Supprimer la note</button></div>`,
+  });
+}
+function notesChanged() { save(); if (S.live && ui.liveOpen) renderLive(); }
 
 let liveLeaveT = null;
 // Fenêtres du bas : glisser vers le bas pour fermer, comme sur iPhone (depuis la poignée, le titre, ou le haut de la liste)
@@ -1093,7 +1135,7 @@ function holdOf(e) {
   }
   return h ? { hold: h, sides: sides || 1 } : null;
 }
-const SWITCH_SEC = 5;
+const SWITCH_SEC = 7;
 let hold = null, holdTick = null;
 function speak(txt) {
   try { const u = new SpeechSynthesisUtterance(txt); u.lang = 'fr-FR'; u.rate = 1.05; speechSynthesis.cancel(); speechSynthesis.speak(u); } catch (e) { /* rien */ }
@@ -1252,7 +1294,7 @@ function daySheet(dayId) {
     render() {
       const dy = this.dy; if (!dy) return sheetHead('');
       return `${sheetHead(esc(dy.name), '<button class="link b" data-a="dayEdit">Modifier</button>')}
-        <div class="day-pills">${groupAbs(dy.exercises, (e) => `<div class="cell day-row ex-row">${exIcon(exById(e.exId))}<span class="main"><span class="t">${esc(exById(e.exId).name)}</span></span></div>`) || '<div class="empty">Aucun exercice.</div>'}</div>
+        <div class="day-pills">${groupAbs(dy.exercises, (e) => `<button class="cell day-row ex-row" data-a="exNotes" data-x="${e.exId}">${exIcon(exById(e.exId))}<span class="main"><span class="t">${esc(exById(e.exId).name)}</span>${notesFor(e.exId)[0] ? `<span class="s ex-row-note">${esc(notesFor(e.exId)[0].text)}</span>` : ''}</span><span class="row-note${notesFor(e.exId).length ? ' has' : ''}">${ICON.note}${notesFor(e.exId).length ? `<b>${notesFor(e.exId).length}</b>` : ''}</span></button>`) || '<div class="empty">Aucun exercice.</div>'}</div>
         <button class="btn filled block" data-a="startWorkout" data-p="${activeProgram().id}" data-d="${dy.id}">${ICON.play} Commencer</button>`;
     },
   });
@@ -1577,6 +1619,27 @@ const A = {
   progRename() { const p = activeProgram(); textSheet({ title: 'Renommer', label: 'Nom', value: p.name, onOk: (v) => { p.name = v; save(); closeAllSheets(); render(); } }); },
   progDelete() { const p = activeProgram(); confirmSheet({ title: `Supprimer « ${esc(p.name)} » ?`, text: 'Tes séances passées restent dans l’historique.', onOk: () => { S.programs = S.programs.filter((x) => x.id !== p.id); S.activeProgramId = S.programs[0] ? S.programs[0].id : null; save(); closeAllSheets(); render(); } }); },
   sessionOpen(el) { sessionSheet(el.dataset.id); },
+  exNotes(el) { notesSheet(el.dataset.x); },
+  noteAdd() {
+    const ta = $('#note-new'), text = ta ? ta.value.trim() : ''; if (!text) { if (ta) ta.focus(); return; }
+    const exId = topSheet().exId; S.exNotes = S.exNotes || {};
+    (S.exNotes[exId] = S.exNotes[exId] || []).push({ id: uid(), text, at: Date.now() });
+    haptic(); notesChanged(); paintSheet(); toast('Note ajoutée');
+  },
+  noteEdit(el) { noteEditSheet(el.dataset.x, el.dataset.id); },
+  noteSave() {
+    const sh = topSheet(), ta = $('#note-edit'), text = ta ? ta.value.trim() : '';
+    const n = (S.exNotes[sh.exId] || []).find((x) => x.id === sh.noteId); if (!n) return;
+    if (!text) { A.noteDel(); return; }
+    n.text = text; notesChanged(); closeSheet(); paintSheet(); toast('Note modifiée');
+  },
+  noteDel() {
+    const sh = topSheet();
+    confirmSheet({ title: 'Supprimer la note ?', text: 'Elle sera effacée pour de bon.', ok: 'Supprimer', onOk: () => {
+      S.exNotes[sh.exId] = (S.exNotes[sh.exId] || []).filter((x) => x.id !== sh.noteId);
+      notesChanged(); closeSheet(); paintSheet(); toast('Note supprimée');
+    } });
+  },
   calNav(el) {
     const [y, mo] = (ui.calMonth || dkey().slice(0, 7)).split('-').map(Number);
     const d = new Date(y, mo - 1 + Number(el.dataset.v), 1);
