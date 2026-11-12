@@ -96,7 +96,7 @@ function celebrate() {
   document.body.appendChild(box); setTimeout(() => box.remove(), 1800);
 }
 // Version de l'appli : doit être la même que VERSION dans sw.js
-const APP_VERSION = 'husofit-v86';
+const APP_VERSION = 'husofit-v87';
 // Mise à jour automatique : si une nouvelle version est en ligne, l'appli se recharge toute seule (données gardées)
 function checkUpdate() {
   if (!/^https?:/.test(location.protocol)) return;
@@ -228,7 +228,7 @@ function syncCoach() {
     if (dy) S.live.exercises.forEach((e, i) => {
       let t = dy.exercises.find((x) => x.exId === e.exId);
       if (!t && !e.sets.some((s) => s.done) && dy.exercises[i] && !S.live.exercises.some((x) => x.exId === dy.exercises[i].exId)) { t = dy.exercises[i]; e.exId = t.exId; e.kg = t.kg || 0; e.note = t.note || ''; }
-      if (t) { e.rest = t.rest; e.kg = t.kg || 0; e.bw = !!t.bw; if (e.bw) e.sets.forEach((s) => { if (!s.done) s.kg = ''; }); }
+      if (t) { e.rest = t.rest; e.kg = t.kg || 0; e.bw = !!t.bw; e.perSide = !!t.perSide; if (e.bw) e.sets.forEach((s) => { if (!s.done) s.kg = ''; }); }
     });
   }
   if (first) S.activeProgramId = C.id;
@@ -747,7 +747,7 @@ function placeTabInd(animate = true) {
 function mkLiveEx(exId, tpl) {
   const prev = lastSetsFor(exId);
   const n = (tpl && tpl.sets) || (prev && prev.length) || 3;
-  return { exId, target: tpl ? `${tpl.sets} × ${tpl.reps}` : '', repsT: tpl && /^\d+$/.test(String(tpl.reps).trim()) ? String(tpl.reps).trim() : '', kg: (tpl && tpl.kg) || 0, note: (tpl && tpl.note) || '', rest: (tpl && tpl.rest) || S.settings.rest, bw: !!(tpl && tpl.bw), hold: (tpl && tpl.hold) || 0, sides: (tpl && tpl.sides) || 1, sets: Array.from({ length: n }, () => ({ kg: '', reps: '', done: false })) };
+  return { exId, target: tpl ? `${tpl.sets} × ${tpl.reps}` : '', repsT: tpl && /^\d+$/.test(String(tpl.reps).trim()) ? String(tpl.reps).trim() : '', kg: (tpl && tpl.kg) || 0, note: (tpl && tpl.note) || '', rest: (tpl && tpl.rest) || S.settings.rest, bw: !!(tpl && tpl.bw), perSide: !!(tpl && tpl.perSide), hold: (tpl && tpl.hold) || 0, sides: (tpl && tpl.sides) || 1, sets: Array.from({ length: n }, () => ({ kg: '', reps: '', done: false })) };
 }
 function startWorkout(progId, dayId) {
   if (S.live) { ui.liveOpen = true; render(); toast('Une séance est déjà en cours'); return; }
@@ -803,7 +803,7 @@ function liveCircuit(idx) {
       const meta = h ? (h.sides > 1 ? 'chaque côté' : '') : cleanNote(e.note);
       html += `<div class="tour-ex"><div class="tour-name"><button class="tn" data-a="exHist" data-e="${i}">${esc(ex.name)}</button>${noteBtn(e.exId, true)}${meta ? `<span class="tm">${esc(meta)}</span>` : ''}${h && !s.done ? `<button class="tour-hold" data-a="holdStart" data-e="${i}" data-s="${k}" aria-label="Lancer le chrono">${ICON.stopwatch}${h.hold} s</button>` : ''}</div>
         <div class="uf-row${s.done ? ' done' : ''}${e.bw ? ' one' : ''}">
-          <label class="uf"><input type="text" inputmode="numeric" id="ls-${i}-${k}-reps" value="${esc(s.reps)}" placeholder="${esc(phR)}" data-in="liveSet" data-e="${i}" data-s="${k}" data-f="reps" aria-label="${h ? 'Secondes' : 'Répétitions'} ${esc(ex.name)} tour ${k + 1}"><span class="u">${h ? 's' : 'reps'}</span></label>
+          <label class="uf"><input type="text" inputmode="numeric" id="ls-${i}-${k}-reps" value="${esc(s.reps)}" placeholder="${esc(phR)}" data-in="liveSet" data-e="${i}" data-s="${k}" data-f="reps" aria-label="${h ? 'Secondes' : 'Répétitions'} ${esc(ex.name)} tour ${k + 1}"><span class="u">${h ? 's' : e.perSide ? 'reps / côté' : 'reps'}</span></label>
           ${e.bw ? '' : `<label class="uf"><input type="text" inputmode="decimal" id="ls-${i}-${k}-kg" value="${esc(s.kg)}" placeholder="${esc(phKg)}" data-in="liveSet" data-e="${i}" data-s="${k}" data-f="kg" aria-label="Charge ${esc(ex.name)} tour ${k + 1}"><span class="u">kg</span></label>`}
         </div></div>`;
     });
@@ -825,7 +825,7 @@ function liveExCard(e, i) {
     const phKg = suggestKg(e, j);
     const phR = p ? p.reps : j > 0 && e.sets[j - 1].reps !== '' ? e.sets[j - 1].reps : (e.repsT || '');
     return `<div class="row-wrap ${s.done ? 'done' : ''}">
-      <label class="uf"><input type="text" inputmode="numeric" id="ls-${i}-${j}-reps" value="${esc(s.reps)}" placeholder="${esc(phR)}" data-in="liveSet" data-e="${i}" data-s="${j}" data-f="reps" aria-label="${holdOf(e) ? 'Secondes' : 'Répétitions'} série ${j + 1}"><span class="u">${holdOf(e) ? 's' : 'reps'}</span></label>
+      <label class="uf"><input type="text" inputmode="numeric" id="ls-${i}-${j}-reps" value="${esc(s.reps)}" placeholder="${esc(phR)}" data-in="liveSet" data-e="${i}" data-s="${j}" data-f="reps" aria-label="${holdOf(e) ? 'Secondes' : 'Répétitions'} série ${j + 1}"><span class="u">${holdOf(e) ? 's' : e.perSide ? 'reps / côté' : 'reps'}</span></label>
       ${e.bw ? '' : `<label class="uf"><input type="text" inputmode="decimal" id="ls-${i}-${j}-kg" value="${esc(s.kg)}" placeholder="${esc(phKg)}" data-in="liveSet" data-e="${i}" data-s="${j}" data-f="kg" aria-label="Charge série ${j + 1}"><span class="u">kg</span></label>`}
       <button class="tick ${s.done ? 'on' : ''}" data-a="liveToggle" data-e="${i}" data-s="${j}" aria-label="Valider la série ${j + 1}">${ICON.check}</button></div>`;
   }).join('');
