@@ -72,6 +72,7 @@ const EXERCISES = [
   { id: 'plank', name: 'Gainage', muscle: 'Abdos', equip: 'Poids du corps' },
   { id: 'crunch', name: 'Crunch', muscle: 'Abdos', equip: 'Poids du corps' },
   { id: 'side-plank', name: 'Planche latérale', muscle: 'Abdos', equip: 'Poids du corps' },
+  { id: 'side-plank-weighted', name: 'Planche latérale lestée', muscle: 'Abdos', equip: 'Haltères' },
   { id: 'plank-leg-open', name: 'Gainage ouverture de jambe alternée', muscle: 'Abdos', equip: 'Poids du corps' },
   { id: 'crunch-db', name: 'Crunch haltère', muscle: 'Abdos', equip: 'Haltères' },
   { id: 'crunch-cable', name: 'Crunch poulie', muscle: 'Abdos', equip: 'Poulie' },
@@ -90,7 +91,7 @@ const EXERCISES = [
 const COACH_PROGRAM = {
   id: 'coach',
   name: 'Programme coach',
-  version: 13,
+  version: 14,
   days: [
     { id: 'mon-upper', name: 'Lundi · Upper', weekday: 1, exercises: [
       { exId: 'lat-pulldown', sets: 3, reps: '8-12', kg: 36.5, rest: 120, note: '1-2 RIR' },
@@ -108,7 +109,7 @@ const COACH_PROGRAM = {
       { exId: 'leg-curl', sets: 3, reps: '10-15', kg: 46, rest: 120, note: '1-2 RIR' },
       { exId: 'calf-standing', sets: 3, reps: '10-15', kg: 57.5, rest: 90, note: '1-2 RIR' },
       { exId: 'crunch', sets: 3, reps: '12', kg: 0, rest: 60, note: 'Abdos' },
-      { exId: 'side-plank', sets: 3, reps: '8', kg: 0, rest: 60, note: 'Abdos · 8 de chaque côté' },
+      { exId: 'side-plank', sets: 3, reps: '8', kg: 0, rest: 60, bw: true, note: 'Abdos · 8 de chaque côté' },
       { exId: 'plank-leg-open', sets: 3, reps: '12', kg: 0, rest: 60, note: 'Abdos · en alternant les jambes' },
     ] },
     { id: 'thu-push', name: 'Jeudi · Push', weekday: 4, exercises: [
@@ -126,7 +127,7 @@ const COACH_PROGRAM = {
       { exId: 'reverse-fly-machine', sets: 3, reps: '10-15', kg: 35.2, rest: 90, note: '' },
       { exId: 'cable-curl', sets: 3, reps: '10-15', kg: 28.5, rest: 120, note: '' },
       { exId: 'crunch-db', sets: 3, reps: '12', kg: 12, rest: 60, note: 'Abdos' },
-      { exId: 'side-plank', sets: 3, reps: '30', kg: 4, rest: 60, hold: 30, sides: 2, note: 'Abdos · 30 s de chaque côté' },
+      { exId: 'side-plank-weighted', sets: 3, reps: '30', kg: 4, rest: 60, hold: 30, sides: 2, note: 'Abdos · 30 s de chaque côté' },
       { exId: 'back-ext-straight', sets: 3, reps: '8-12', kg: 20, rest: 60, note: 'Abdos' },
     ] },
     { id: 'sat-leg', name: 'Samedi · Leg', weekday: 6, exercises: [

@@ -96,7 +96,7 @@ function celebrate() {
   document.body.appendChild(box); setTimeout(() => box.remove(), 1800);
 }
 // Version de l'appli : doit être la même que VERSION dans sw.js
-const APP_VERSION = 'husofit-v85';
+const APP_VERSION = 'husofit-v86';
 // Mise à jour automatique : si une nouvelle version est en ligne, l'appli se recharge toute seule (données gardées)
 function checkUpdate() {
   if (!/^https?:/.test(location.protocol)) return;
@@ -141,6 +141,7 @@ const sessionsSorted = () => S.sessions.slice().sort((a, b) => b.startedAt - a.s
 const checksSorted = () => S.checks.slice().sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
 
 function suggestKg(e, j) {
+  if (e.bw) return '';
   if (j > 0 && e.sets[j - 1] && e.sets[j - 1].kg !== '') return e.sets[j - 1].kg;
   const prev = lastSetsFor(e.exId);
   if (prev && prev.length) { const p = prev[j] || prev[prev.length - 1]; if (p && Number.isFinite(p.kg)) return nf(p.kg, 2); }
@@ -218,6 +219,8 @@ function syncCoach() {
   });
   // Le leg extension du samedi (plus léger) a son propre historique, séparé de celui du mardi
   S.sessions.forEach((s) => { if (s.dayId === 'sat-leg') s.exercises.forEach((e) => { if (e.exId === 'leg-ext') e.exId = 'leg-ext-light'; }); });
+  S.sessions.forEach((s) => { if (s.dayId === 'fri-pull') s.exercises.forEach((e) => { if (e.exId === 'side-plank') e.exId = 'side-plank-weighted'; }); });
+  if (S.live && S.live.dayId === 'fri-pull') S.live.exercises.forEach((e) => { if (e.exId === 'side-plank') e.exId = 'side-plank-weighted'; });
   if (S.live && S.live.dayId === 'sat-leg') S.live.exercises.forEach((e) => { if (e.exId === 'leg-ext') { e.exId = 'leg-ext-light'; e.kg = 49.5; } });
   // Séance en cours : applique les nouveaux temps de repos et les exercices remplacés (sans toucher aux séries déjà faites)
   if (S.live && S.live.programId === C.id) {
@@ -225,7 +228,7 @@ function syncCoach() {
     if (dy) S.live.exercises.forEach((e, i) => {
       let t = dy.exercises.find((x) => x.exId === e.exId);
       if (!t && !e.sets.some((s) => s.done) && dy.exercises[i] && !S.live.exercises.some((x) => x.exId === dy.exercises[i].exId)) { t = dy.exercises[i]; e.exId = t.exId; e.kg = t.kg || 0; e.note = t.note || ''; }
-      if (t) { e.rest = t.rest; e.kg = t.kg || 0; }
+      if (t) { e.rest = t.rest; e.kg = t.kg || 0; e.bw = !!t.bw; if (e.bw) e.sets.forEach((s) => { if (!s.done) s.kg = ''; }); }
     });
   }
   if (first) S.activeProgramId = C.id;
@@ -744,7 +747,7 @@ function placeTabInd(animate = true) {
 function mkLiveEx(exId, tpl) {
   const prev = lastSetsFor(exId);
   const n = (tpl && tpl.sets) || (prev && prev.length) || 3;
-  return { exId, target: tpl ? `${tpl.sets} × ${tpl.reps}` : '', repsT: tpl && /^\d+$/.test(String(tpl.reps).trim()) ? String(tpl.reps).trim() : '', kg: (tpl && tpl.kg) || 0, note: (tpl && tpl.note) || '', rest: (tpl && tpl.rest) || S.settings.rest, hold: (tpl && tpl.hold) || 0, sides: (tpl && tpl.sides) || 1, sets: Array.from({ length: n }, () => ({ kg: '', reps: '', done: false })) };
+  return { exId, target: tpl ? `${tpl.sets} × ${tpl.reps}` : '', repsT: tpl && /^\d+$/.test(String(tpl.reps).trim()) ? String(tpl.reps).trim() : '', kg: (tpl && tpl.kg) || 0, note: (tpl && tpl.note) || '', rest: (tpl && tpl.rest) || S.settings.rest, bw: !!(tpl && tpl.bw), hold: (tpl && tpl.hold) || 0, sides: (tpl && tpl.sides) || 1, sets: Array.from({ length: n }, () => ({ kg: '', reps: '', done: false })) };
 }
 function startWorkout(progId, dayId) {
   if (S.live) { ui.liveOpen = true; render(); toast('Une séance est déjà en cours'); return; }
@@ -799,9 +802,9 @@ function liveCircuit(idx) {
       const h = holdOf(e);
       const meta = h ? (h.sides > 1 ? 'chaque côté' : '') : cleanNote(e.note);
       html += `<div class="tour-ex"><div class="tour-name"><button class="tn" data-a="exHist" data-e="${i}">${esc(ex.name)}</button>${noteBtn(e.exId, true)}${meta ? `<span class="tm">${esc(meta)}</span>` : ''}${h && !s.done ? `<button class="tour-hold" data-a="holdStart" data-e="${i}" data-s="${k}" aria-label="Lancer le chrono">${ICON.stopwatch}${h.hold} s</button>` : ''}</div>
-        <div class="uf-row${s.done ? ' done' : ''}">
+        <div class="uf-row${s.done ? ' done' : ''}${e.bw ? ' one' : ''}">
           <label class="uf"><input type="text" inputmode="numeric" id="ls-${i}-${k}-reps" value="${esc(s.reps)}" placeholder="${esc(phR)}" data-in="liveSet" data-e="${i}" data-s="${k}" data-f="reps" aria-label="${h ? 'Secondes' : 'Répétitions'} ${esc(ex.name)} tour ${k + 1}"><span class="u">${h ? 's' : 'reps'}</span></label>
-          ${`<label class="uf"><input type="text" inputmode="decimal" id="ls-${i}-${k}-kg" value="${esc(s.kg)}" placeholder="${esc(phKg)}" data-in="liveSet" data-e="${i}" data-s="${k}" data-f="kg" aria-label="Charge ${esc(ex.name)} tour ${k + 1}"><span class="u">kg</span></label>`}
+          ${e.bw ? '' : `<label class="uf"><input type="text" inputmode="decimal" id="ls-${i}-${k}-kg" value="${esc(s.kg)}" placeholder="${esc(phKg)}" data-in="liveSet" data-e="${i}" data-s="${k}" data-f="kg" aria-label="Charge ${esc(ex.name)} tour ${k + 1}"><span class="u">kg</span></label>`}
         </div></div>`;
     });
     html += done
@@ -823,7 +826,7 @@ function liveExCard(e, i) {
     const phR = p ? p.reps : j > 0 && e.sets[j - 1].reps !== '' ? e.sets[j - 1].reps : (e.repsT || '');
     return `<div class="row-wrap ${s.done ? 'done' : ''}">
       <label class="uf"><input type="text" inputmode="numeric" id="ls-${i}-${j}-reps" value="${esc(s.reps)}" placeholder="${esc(phR)}" data-in="liveSet" data-e="${i}" data-s="${j}" data-f="reps" aria-label="${holdOf(e) ? 'Secondes' : 'Répétitions'} série ${j + 1}"><span class="u">${holdOf(e) ? 's' : 'reps'}</span></label>
-      <label class="uf"><input type="text" inputmode="decimal" id="ls-${i}-${j}-kg" value="${esc(s.kg)}" placeholder="${esc(phKg)}" data-in="liveSet" data-e="${i}" data-s="${j}" data-f="kg" aria-label="Charge série ${j + 1}"><span class="u">kg</span></label>
+      ${e.bw ? '' : `<label class="uf"><input type="text" inputmode="decimal" id="ls-${i}-${j}-kg" value="${esc(s.kg)}" placeholder="${esc(phKg)}" data-in="liveSet" data-e="${i}" data-s="${j}" data-f="kg" aria-label="Charge série ${j + 1}"><span class="u">kg</span></label>`}
       <button class="tick ${s.done ? 'on' : ''}" data-a="liveToggle" data-e="${i}" data-s="${j}" aria-label="Valider la série ${j + 1}">${ICON.check}</button></div>`;
   }).join('');
   const note = cleanNote(e.note);
@@ -836,7 +839,7 @@ function liveExCard(e, i) {
       <button class="icon-btn plain" data-a="exHist" data-e="${i}" aria-label="Historique et options">${ICON.clock}</button>
       ${allDone ? `<button class="icon-btn plain" data-a="liveCollapse" data-e="${i}" aria-label="Réduire">${ICON.up}</button>` : ''}</div>
     ${lastNote ? `<button class="ex-note" data-a="exNotes" data-x="${e.exId}">${ICON.note}<span>${esc(lastNote.text)}</span></button>` : ''}
-    <div class="sets uf-sets">${rows}</div>
+    <div class="sets uf-sets${e.bw ? ' bw' : ''}">${rows}</div>
     ${holdOf(e) && !allDone ? `<button class="btn hold-btn" data-a="holdStart" data-e="${i}">${ICON.stopwatch}Chrono ${holdOf(e).hold} s${holdOf(e).sides > 1 ? ' de chaque côté' : ''}</button>` : ''}
     <button class="link small" data-a="liveAddSet" data-e="${i}" style="align-self:flex-start;padding:0">+ Ajouter une série</button></div>`;
 }

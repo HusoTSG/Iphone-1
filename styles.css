@@ -1055,3 +1055,5 @@ button.ex-row { width: 100%; text-align: left; font: inherit; color: inherit; cu
 .row-note svg { width: 19px; height: 19px; }
 .row-note.has { color: var(--blue); }
 .note-btn:not(.has) { color: var(--label-2) !important; }
+/* Exercice au poids du corps : seulement les reps */
+.sets.uf-sets.bw { grid-template-columns: minmax(0, 1fr) 48px; }
